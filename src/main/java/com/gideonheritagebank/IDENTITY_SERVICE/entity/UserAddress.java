@@ -13,6 +13,9 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(
         name = "user_addresses",
@@ -49,7 +52,12 @@ public class UserAddress {
     @Column(name = "postal_code", length = 30)
     private String postalCode;
 
-    @Column(name = "country_code", nullable = false, length = 2)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(
+            name = "country_code",
+            nullable = false,
+            columnDefinition = "CHAR(2)"
+    )
     private String countryCode;
 
     @Enumerated(EnumType.STRING)
