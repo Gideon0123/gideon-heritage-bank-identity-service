@@ -38,7 +38,8 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> failure(
             String message,
             Map<String, String> errors,
-            String path
+            String path,
+            String traceId
     ) {
         return ApiResponse.<T>builder()
                 .timestamp(Instant.now())
@@ -46,6 +47,7 @@ public class ApiResponse<T> {
                 .message(message)
                 .errors(errors == null ? Map.of() : errors)
                 .path(path)
+                .traceId(traceId)
                 .build();
     }
 }

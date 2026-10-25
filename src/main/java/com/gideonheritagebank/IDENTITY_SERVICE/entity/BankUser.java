@@ -155,4 +155,27 @@ public class BankUser {
             staffProfile.setUser(this);
         }
     }
+
+    public static BankUser createCustomer(
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            String passwordHash
+    ) {
+        BankUser user = new BankUser();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPhoneNumber(phoneNumber);
+        user.setPasswordHash(passwordHash);
+        user.setUserType(UserType.CUSTOMER);
+        user.setEnabled(true);
+        user.setEmailVerified(false);
+        user.setAccountNonLocked(true);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+
+        return user;
+    }
 }
