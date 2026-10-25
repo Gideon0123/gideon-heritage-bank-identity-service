@@ -2,7 +2,9 @@ package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -12,10 +14,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "roles")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Role {
 
     @Id
@@ -37,39 +40,8 @@ public class Role {
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<BankUser> users = new HashSet<>();
 
-    protected Role() {
-    }
-
     public Role(RoleName name, String description) {
         this.name = name;
         this.description = description;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public RoleName getName() {
-        return name;
-    }
-
-    public void setName(RoleName name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Set<BankUser> getUsers() {
-        return users;
     }
 }

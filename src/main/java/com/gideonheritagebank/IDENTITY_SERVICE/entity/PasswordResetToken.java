@@ -1,7 +1,9 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -19,6 +21,7 @@ import java.util.UUID;
                 @Index(name = "idx_password_reset_expires_at", columnList = "expires_at")
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PasswordResetToken {
 
     @Id
@@ -43,9 +46,6 @@ public class PasswordResetToken {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected PasswordResetToken() {
-    }
-
     public PasswordResetToken(
             BankUser user,
             String tokenHash,
@@ -56,43 +56,4 @@ public class PasswordResetToken {
         this.expiresAt = expiresAt;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public BankUser getUser() {
-        return user;
-    }
-
-    public void setUser(BankUser user) {
-        this.user = user;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public Instant getUsedAt() {
-        return usedAt;
-    }
-
-    public void setUsedAt(Instant usedAt) {
-        this.usedAt = usedAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
 }

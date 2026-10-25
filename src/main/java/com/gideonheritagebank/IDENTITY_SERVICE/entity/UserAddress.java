@@ -2,7 +2,9 @@ package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.AddressType;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -11,8 +13,6 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
-@Getter
-@Setter
 @Entity
 @Table(
         name = "user_addresses",
@@ -20,6 +20,9 @@ import java.util.UUID;
                 @Index(name = "idx_user_addresses_user_id", columnList = "user_id")
         }
 )
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserAddress {
 
     @Id
@@ -64,9 +67,6 @@ public class UserAddress {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected UserAddress() {
-    }
-
     public UserAddress(
             String addressLine1,
             String addressLine2,
@@ -87,87 +87,5 @@ public class UserAddress {
         this.primary = primary;
     }
 
-    public UUID getId() {
-        return id;
-    }
 
-    public BankUser getUser() {
-        return user;
-    }
-
-    public void setUser(BankUser user) {
-        this.user = user;
-    }
-
-    public String getAddressLine1() {
-        return addressLine1;
-    }
-
-    public void setAddressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
-    }
-
-    public String getAddressLine2() {
-        return addressLine2;
-    }
-
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getStateOrRegion() {
-        return stateOrRegion;
-    }
-
-    public void setStateOrRegion(String stateOrRegion) {
-        this.stateOrRegion = stateOrRegion;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public String getCountryCode() {
-        return countryCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    public AddressType getAddressType() {
-        return addressType;
-    }
-
-    public void setAddressType(AddressType addressType) {
-        this.addressType = addressType;
-    }
-
-    public boolean isPrimary() {
-        return primary;
-    }
-
-    public void setPrimary(boolean primary) {
-        this.primary = primary;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
 }

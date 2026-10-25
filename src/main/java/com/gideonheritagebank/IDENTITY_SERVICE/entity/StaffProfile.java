@@ -2,7 +2,9 @@ package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -28,6 +30,7 @@ import java.util.UUID;
                 )
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StaffProfile {
 
     @Id
@@ -60,9 +63,6 @@ public class StaffProfile {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected StaffProfile() {
-    }
-
     public StaffProfile(
             String employeeNumber,
             StaffRole staffRole,
@@ -73,55 +73,4 @@ public class StaffProfile {
         this.hireDate = hireDate;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public BankUser getUser() {
-        return user;
-    }
-
-    public void setUser(BankUser user) {
-        this.user = user;
-    }
-
-    public String getEmployeeNumber() {
-        return employeeNumber;
-    }
-
-    public void setEmployeeNumber(String employeeNumber) {
-        this.employeeNumber = employeeNumber;
-    }
-
-    public StaffRole getStaffRole() {
-        return staffRole;
-    }
-
-    public void setStaffRole(StaffRole staffRole) {
-        this.staffRole = staffRole;
-    }
-
-    public LocalDate getHireDate() {
-        return hireDate;
-    }
-
-    public void setHireDate(LocalDate hireDate) {
-        this.hireDate = hireDate;
-    }
-
-    public Instant getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public void setLastLoginAt(Instant lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
 }

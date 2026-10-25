@@ -1,7 +1,9 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -19,6 +21,7 @@ import java.util.UUID;
                 @Index(name = "idx_refresh_tokens_expires_at", columnList = "expires_at")
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
 
     @Id
@@ -47,9 +50,6 @@ public class RefreshToken {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected RefreshToken() {
-    }
-
     public RefreshToken(
             BankUser user,
             String tokenHash,
@@ -60,24 +60,5 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
-    public void setUser(BankUser user) {
-        this.user = user;
-    }
-
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public void setRevokedAt(Instant revokedAt) {
-        this.revokedAt = revokedAt;
-    }
-
-    public void setReplacedByToken(RefreshToken replacedByToken) {
-        this.replacedByToken = replacedByToken;
-    }
 
 }
