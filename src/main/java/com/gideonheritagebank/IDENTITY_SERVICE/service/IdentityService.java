@@ -25,9 +25,7 @@ import java.util.stream.Collectors;
 public class IdentityService {
 
     private final BankUserRepository bankUserRepository;
-
     private final RoleRepository roleRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     @Transactional

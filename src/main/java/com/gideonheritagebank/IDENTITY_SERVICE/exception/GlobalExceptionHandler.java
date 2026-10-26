@@ -150,9 +150,15 @@ public class GlobalExceptionHandler {
             Map<String, String> errors,
             HttpServletRequest request
     ) {
-        String traceId = TraceIdUtil.generate();
+        String traceId = request.getHeader("X-Request-Id");
+
+        if (traceId == null || traceId.isBlank()) {
+            traceId = TraceIdUtil.generate();
+        }
+
         ApiResponse<Void> body = ApiResponse.failure(
                 message,
+                status.value(),
                 errors,
                 request.getRequestURI(),
                 traceId

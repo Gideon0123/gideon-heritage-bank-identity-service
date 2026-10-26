@@ -17,6 +17,7 @@ public class ApiResponse<T> {
 
     private Instant timestamp = Instant.now();
     private boolean success;
+    private int status;
     private String message;
     private T data;
     private Map<String, String> errors;
@@ -25,24 +26,30 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> success(
             String message,
-            T data
+            int status,
+            T data,
+            String traceId
     ) {
         return ApiResponse.<T>builder()
                 .timestamp(Instant.now())
                 .success(true)
+                .status(status)
                 .message(message)
                 .data(data)
+                .traceId(traceId)
                 .build();
     }
 
     public static <T> ApiResponse<T> failure(
             String message,
+            int status,
             Map<String, String> errors,
             String path,
             String traceId
     ) {
         return ApiResponse.<T>builder()
                 .timestamp(Instant.now())
+                .status(status)
                 .success(false)
                 .message(message)
                 .errors(errors == null ? Map.of() : errors)
