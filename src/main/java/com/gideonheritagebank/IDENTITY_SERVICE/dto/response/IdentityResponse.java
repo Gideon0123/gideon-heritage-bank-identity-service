@@ -19,25 +19,15 @@ import java.util.UUID;
 public class IdentityResponse {
 
     private UUID id;
-
     private String firstName;
-
     private String lastName;
-
     private String email;
-
     private String phoneNumber;
-
     private UserType userType;
-
     private boolean enabled;
-
     private boolean emailVerified;
-
     private Set<RoleName> roles;
-
     private Instant createdAt;
-
     private boolean accountNonLocked;
     private Instant lockedUntil;
 }

@@ -6,7 +6,6 @@ import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
-import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
@@ -43,16 +42,10 @@ public class StaffIdentityService {
         String lastName = normalizeName(request.getLastName());
         String email = normalizeEmail(request.getEmail());
         String phoneNumber = normalizePhoneNumber(request.getPhoneNumber());
-        String employeeNumber = normalizeEmployeeNumber(
-                request.getEmployeeNumber()
-        );
+        String employeeNumber = normalizeEmployeeNumber(request.getEmployeeNumber());
 
         validateRequiredFields(
-                firstName,
-                lastName,
-                email,
-                phoneNumber,
-                employeeNumber
+                firstName, lastName, email, phoneNumber, employeeNumber
         );
 
         validateHireDate(request.getHireDate());
@@ -91,11 +84,7 @@ public class StaffIdentityService {
         temporarySecret = null;
 
         BankUser staffUser = BankUser.createStaff(
-                firstName,
-                lastName,
-                email,
-                phoneNumber,
-                passwordHash
+                firstName, lastName, email, phoneNumber, passwordHash
         );
 
         staffUser.addRole(staffRole);
