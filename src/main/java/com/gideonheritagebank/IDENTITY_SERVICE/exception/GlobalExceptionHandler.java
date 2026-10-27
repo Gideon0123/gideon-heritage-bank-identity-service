@@ -144,6 +144,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationFailed(
+            AuthenticationFailedException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid email or password",
+                Map.of(),
+                request
+        );
+    }
+
     @ExceptionHandler(PhoneNumberAlreadyRegisteredException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicatePhoneNumber(
             PhoneNumberAlreadyRegisteredException exception,

@@ -6,7 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-//import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -69,10 +69,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> {
-                            // Uses the JwtDecoder bean configured above.
-                        })
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(withDefaults())
                 );
 
         return http.build();

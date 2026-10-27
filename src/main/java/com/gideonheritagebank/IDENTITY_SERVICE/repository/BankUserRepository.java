@@ -25,4 +25,14 @@ public interface BankUserRepository extends JpaRepository<BankUser, UUID> {
     Optional<BankUser> findByIdForUpdate(
             @Param("userId") UUID userId
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+       SELECT u
+       FROM BankUser u
+       WHERE LOWER(u.email) = LOWER(:email)
+       """)
+    Optional<BankUser> findByEmailForUpdate(
+            @Param("email") String email
+    );
 }

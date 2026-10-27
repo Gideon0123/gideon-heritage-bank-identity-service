@@ -3,6 +3,7 @@ package com.gideonheritagebank.IDENTITY_SERVICE.security;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.nimbusds.jose.jwk.RSAKey;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -30,6 +31,7 @@ public class JwtService {
     @Value("${identity.jwt.audience}")
     private String audience;
 
+    @Getter
     @Value("${identity.jwt.access-token-ttl:PT10M}")
     private Duration accessTokenTtl;
 
@@ -66,4 +68,5 @@ public class JwtService {
                 JwtEncoderParameters.from(header, claims)
         ).getTokenValue();
     }
+
 }

@@ -60,5 +60,20 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
+    public static RefreshToken create(
+            BankUser user,
+            String tokenHash,
+            Instant expiresAt
+    ) {
+        RefreshToken refreshToken = new RefreshToken();
+
+        refreshToken.setUser(user);
+        refreshToken.setTokenHash(tokenHash);
+        refreshToken.setExpiresAt(expiresAt);
+        refreshToken.setRevokedAt(null);
+        refreshToken.setReplacedByToken(null);
+
+        return refreshToken;
+    }
 
 }
