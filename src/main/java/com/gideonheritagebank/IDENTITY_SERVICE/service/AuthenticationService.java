@@ -178,20 +178,15 @@ public class AuthenticationService {
         /*
          * Issue the signed, short-lived access token.
          */
-        String accessToken =
-                jwtService.generateAccessToken(authenticatedUser);
+        String accessToken = jwtService.generateAccessToken(authenticatedUser);
 
         /*
          * Generate a cryptographically random refresh token.
          * The raw token is never written to the database.
          */
         String rawRefreshToken = generateRefreshToken();
-
-        String refreshTokenHash =
-                hashToken(rawRefreshToken);
-
-        Instant refreshTokenExpiresAt =
-                Instant.now().plus(refreshTokenTtl);
+        String refreshTokenHash = hashToken(rawRefreshToken);
+        Instant refreshTokenExpiresAt = Instant.now().plus(refreshTokenTtl);
 
         RefreshToken refreshToken = RefreshToken.create(
                 authenticatedUser,
@@ -201,15 +196,13 @@ public class AuthenticationService {
 
         refreshTokenRepository.saveAndFlush(refreshToken);
 
-        Instant accessTokenExpiresAt =
-                Instant.now().plus(
-                        jwtService.getAccessTokenTtl()
-                );
+        Instant accessTokenExpiresAt = Instant.now().plus(
+                jwtService.getAccessTokenTtl()
+        );
 
-        IdentityResponse identityResponse =
-                identityMapper.toIdentityResponse(
-                        authenticatedUser
-                );
+        IdentityResponse identityResponse = identityMapper.toIdentityResponse(
+                authenticatedUser
+        );
 
         return new AuthenticationResult(
                 identityResponse,
@@ -226,13 +219,10 @@ public class AuthenticationService {
      * ============================================================
      */
 
-    @Transactional(
-            noRollbackFor = AuthenticationFailedException.class
-    )
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public AuthenticationResult refresh(String rawRefreshToken) {
 
-        if (rawRefreshToken == null
-                || rawRefreshToken.isBlank()) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
 
             throw new AuthenticationFailedException();
         }
@@ -240,13 +230,11 @@ public class AuthenticationService {
         /*
          * Only the hash is used for the database lookup.
          */
-        String submittedTokenHash =
-                hashToken(rawRefreshToken);
+        String submittedTokenHash = hashToken(rawRefreshToken);
 
-        Optional<RefreshToken> tokenOptional =
-                refreshTokenRepository.findByTokenHashForUpdate(
-                        submittedTokenHash
-                );
+        Optional<RefreshToken> tokenOptional = refreshTokenRepository.findByTokenHashForUpdate(
+                submittedTokenHash
+        );
 
         if (tokenOptional.isEmpty()) {
 
@@ -268,7 +256,6 @@ public class AuthenticationService {
         if (currentToken.getRevokedAt() != null) {
 
             revokeAllActiveRefreshTokens(user);
-
             refreshTokenRepository.flush();
 
             throw new AuthenticationFailedException();
@@ -281,9 +268,7 @@ public class AuthenticationService {
         if (!currentToken.getExpiresAt().isAfter(now)) {
 
             currentToken.setRevokedAt(now);
-
             refreshTokenRepository.saveAndFlush(currentToken);
-
             throw new AuthenticationFailedException();
         }
 
@@ -293,9 +278,7 @@ public class AuthenticationService {
         if (!user.isEnabled() || !user.isEmailVerified()) {
 
             revokeAllActiveRefreshTokens(user);
-
             refreshTokenRepository.flush();
-
             throw new AuthenticationFailedException();
         }
 
@@ -307,13 +290,10 @@ public class AuthenticationService {
 
             Instant lockedUntil = user.getLockedUntil();
 
-            if (lockedUntil != null
-                    && !lockedUntil.isAfter(now)) {
+            if (lockedUntil != null && !lockedUntil.isAfter(now)) {
 
                 user.setAccountNonLocked(true);
-
                 user.setLockedUntil(null);
-
                 user.setFailedLoginAttempts(0);
 
                 bankUserRepository.saveAndFlush(user);
@@ -321,9 +301,7 @@ public class AuthenticationService {
             } else {
 
                 revokeAllActiveRefreshTokens(user);
-
                 refreshTokenRepository.flush();
-
                 throw new AuthenticationFailedException();
             }
         }
@@ -331,57 +309,42 @@ public class AuthenticationService {
         /*
          * Generate the replacement refresh token.
          */
-        String replacementRawToken =
-                generateRefreshToken();
+        String replacementRawToken = generateRefreshToken();
+        String replacementTokenHash = hashToken(replacementRawToken);
+        Instant replacementExpiresAt = now.plus(refreshTokenTtl);
 
-        String replacementTokenHash =
-                hashToken(replacementRawToken);
-
-        Instant replacementExpiresAt =
-                now.plus(refreshTokenTtl);
-
-        RefreshToken replacementToken =
-                RefreshToken.create(
-                        user,
-                        replacementTokenHash,
-                        replacementExpiresAt
-                );
+        RefreshToken replacementToken = RefreshToken.create(
+                user,
+                replacementTokenHash,
+                replacementExpiresAt
+        );
 
         /*
          * Persist the replacement before linking the old record
          * to it, so the replacement has a database identity.
          */
-        RefreshToken savedReplacement =
-                refreshTokenRepository.saveAndFlush(
-                        replacementToken
-                );
+        RefreshToken savedReplacement = refreshTokenRepository.saveAndFlush(
+                replacementToken
+        );
 
         /*
          * Revoke the old token and record the replacement link.
          */
         currentToken.setRevokedAt(now);
+        currentToken.setReplacedByToken(savedReplacement);
 
-        currentToken.setReplacedByToken(
-                savedReplacement
-        );
-
-        refreshTokenRepository.saveAndFlush(
-                currentToken
-        );
+        refreshTokenRepository.saveAndFlush(currentToken);
 
         /*
          * Issue a new access token.
          */
-        String accessToken =
-                jwtService.generateAccessToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
 
-        Instant accessTokenExpiresAt =
-                Instant.now().plus(
-                        jwtService.getAccessTokenTtl()
-                );
+        Instant accessTokenExpiresAt = Instant.now().plus(
+                jwtService.getAccessTokenTtl()
+        );
 
-        IdentityResponse identityResponse =
-                identityMapper.toIdentityResponse(user);
+        IdentityResponse identityResponse = identityMapper.toIdentityResponse(user);
 
         return new AuthenticationResult(
                 identityResponse,
@@ -406,8 +369,7 @@ public class AuthenticationService {
          * Missing, malformed, or unknown refresh tokens do not
          * prevent the controller from clearing the cookies.
          */
-        if (rawRefreshToken == null
-                || rawRefreshToken.isBlank()) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
 
             return;
         }
@@ -427,13 +389,9 @@ public class AuthenticationService {
 
         if (refreshToken.getRevokedAt() == null) {
 
-            refreshToken.setRevokedAt(
-                    Instant.now()
-            );
+            refreshToken.setRevokedAt(Instant.now());
 
-            refreshTokenRepository.saveAndFlush(
-                    refreshToken
-            );
+            refreshTokenRepository.saveAndFlush(refreshToken);
         }
     }
 
