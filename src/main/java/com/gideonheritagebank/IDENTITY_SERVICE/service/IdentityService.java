@@ -9,6 +9,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.exception.EmailAlreadyRegisteredE
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidRegistrationException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.PhoneNumberAlreadyRegisteredException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.RoleConfigurationException;
+import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +26,7 @@ public class IdentityService {
     private final BankUserRepository bankUserRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IdentityMapper identityMapper;
 
     @Transactional
     public IdentityResponse registerCustomer(RegisterRequest request) {
@@ -65,9 +65,17 @@ public class IdentityService {
 
         user.addRole(customerRole);
 
+        /*
+         * saveAndFlush forces pending SQL operations to be sent to the
+         * database before this method returns. This allows unique
+         * constraint violations to surface within this method's execution.
+         *
+         * The database unique constraints remain essential because two
+         * concurrent registrations can both pass the preliminary checks.
+         */
         BankUser savedUser = bankUserRepository.saveAndFlush(user);
 
-        return toIdentityResponse(savedUser);
+        return identityMapper.toIdentityResponse(savedUser);
     }
 
     private void validatePasswordConfirmation(RegisterRequest request) {
@@ -152,26 +160,5 @@ public class IdentityService {
         }
 
         return phoneNumber.trim();
-    }
-
-    private IdentityResponse toIdentityResponse(BankUser user) {
-
-        Set<RoleName> roles = user.getRoles()
-                .stream()
-                .map(Role::getName)
-                .collect(Collectors.toUnmodifiableSet());
-
-        return IdentityResponse.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .userType(user.getUserType())
-                .enabled(user.isEnabled())
-                .emailVerified(user.isEmailVerified())
-                .roles(roles)
-                .createdAt(user.getCreatedAt())
-                .build();
     }
 }
