@@ -151,7 +151,7 @@ public class BankUser {
     public void assignStaffProfile(StaffProfile staffProfile) {
         this.staffProfile = staffProfile;
 
-        if (staffProfile != null) {
+        if (staffProfile != null && staffProfile.getUser() != this) {
             staffProfile.setUser(this);
         }
     }
@@ -173,6 +173,34 @@ public class BankUser {
         user.setEnabled(true);
         user.setEmailVerified(false);
         user.setAccountNonLocked(true);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+
+        return user;
+    }
+
+    public static BankUser createStaff(
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            String passwordHash
+    ) {
+        BankUser user = new BankUser();
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPhoneNumber(phoneNumber);
+        user.setPasswordHash(passwordHash);
+
+        user.setUserType(UserType.STAFF);
+
+        // Privileged identities must not be enabled automatically.
+        user.setEnabled(false);
+        user.setEmailVerified(false);
+        user.setAccountNonLocked(true);
+
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
 

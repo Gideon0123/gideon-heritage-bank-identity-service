@@ -37,4 +37,7 @@ public class IdentityResponse {
     private Set<RoleName> roles;
 
     private Instant createdAt;
+
+    private boolean accountNonLocked;
+    private Instant lockedUntil;
 }

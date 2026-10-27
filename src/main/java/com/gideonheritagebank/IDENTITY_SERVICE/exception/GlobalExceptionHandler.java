@@ -92,6 +92,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(EmployeeNumberAlreadyRegisteredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateEmployeeNumber(
+            EmployeeNumberAlreadyRegisteredException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateEmail(
             EmailAlreadyRegisteredException exception,
@@ -99,6 +112,32 @@ public class GlobalExceptionHandler {
     ) {
         return errorResponse(
                 HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
+    @ExceptionHandler(IdentityNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIdentityNotFound(
+            IdentityNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidIdentityStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidIdentityState(
+            InvalidIdentityStateException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.BAD_REQUEST,
                 exception.getMessage(),
                 Map.of(),
                 request

@@ -73,4 +73,20 @@ public class StaffProfile {
         this.hireDate = hireDate;
     }
 
+    public static StaffProfile create(
+            BankUser user,
+            String employeeNumber,
+            StaffRole staffRole,
+            LocalDate hireDate
+    ) {
+        StaffProfile profile = new StaffProfile();
+
+        profile.setUser(user);
+        profile.setEmployeeNumber(employeeNumber);
+        profile.setStaffRole(staffRole);
+        profile.setHireDate(hireDate);
+
+        return profile;
+    }
+
 }

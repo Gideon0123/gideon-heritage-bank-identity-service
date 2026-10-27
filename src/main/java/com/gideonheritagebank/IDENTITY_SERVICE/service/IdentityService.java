@@ -5,10 +5,14 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.hibernate.exception.ConstraintViolationException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.EmailAlreadyRegisteredException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidRegistrationException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.PhoneNumberAlreadyRegisteredException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.RoleConfigurationException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidIdentityStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RoleRepository;
@@ -18,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -73,7 +79,13 @@ public class IdentityService {
          * The database unique constraints remain essential because two
          * concurrent registrations can both pass the preliminary checks.
          */
-        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+        BankUser savedUser;
+
+        try {
+            savedUser = bankUserRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException exception) {
+            throw translateRegistrationConflict(exception);
+        }
 
         return identityMapper.toIdentityResponse(savedUser);
     }
@@ -160,5 +172,103 @@ public class IdentityService {
         }
 
         return phoneNumber.trim();
+    }
+
+    private RuntimeException translateRegistrationConflict(
+            DataIntegrityViolationException exception
+    ) {
+        String constraintName = findConstraintName(exception);
+
+        if (constraintName != null) {
+            String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+
+            if (normalizedConstraint.contains("email")) {
+                return new EmailAlreadyRegisteredException();
+            }
+
+            if (normalizedConstraint.contains("phone_number")
+                    || normalizedConstraint.contains("phone")) {
+                return new PhoneNumberAlreadyRegisteredException();
+            }
+        }
+
+        // Unknown integrity failures must not be misreported as duplicate emails
+        // or phone numbers. Let the existing global handler handle the conflict.
+        return exception;
+    }
+
+    private String findConstraintName(Throwable exception) {
+        Throwable current = exception;
+
+        while (current != null) {
+            if (current instanceof ConstraintViolationException violation) {
+                return violation.getConstraintName();
+            }
+
+            current = current.getCause();
+        }
+
+        return null;
+    }
+
+    @Transactional
+    public IdentityResponse enableIdentity(UUID userId) {
+        BankUser user = getIdentityForUpdate(userId);
+
+        user.setEnabled(true);
+
+        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+
+        return identityMapper.toIdentityResponse(savedUser);
+    }
+
+    @Transactional
+    public IdentityResponse disableIdentity(UUID userId) {
+        BankUser user = getIdentityForUpdate(userId);
+
+        user.setEnabled(false);
+
+        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+
+        return identityMapper.toIdentityResponse(savedUser);
+    }
+
+    @Transactional
+    public IdentityResponse lockIdentity(
+            UUID userId,
+            Instant lockedUntil
+    ) {
+        if (lockedUntil != null && !lockedUntil.isAfter(Instant.now())) {
+            throw new InvalidIdentityStateException(
+                    "Lock expiry must be a future timestamp"
+            );
+        }
+
+        BankUser user = getIdentityForUpdate(userId);
+
+        user.setAccountNonLocked(false);
+        user.setLockedUntil(lockedUntil);
+
+        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+
+        return identityMapper.toIdentityResponse(savedUser);
+    }
+
+    @Transactional
+    public IdentityResponse unlockIdentity(UUID userId) {
+        BankUser user = getIdentityForUpdate(userId);
+
+        user.setAccountNonLocked(true);
+        user.setLockedUntil(null);
+        user.setFailedLoginAttempts(0);
+
+        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+
+        return identityMapper.toIdentityResponse(savedUser);
+    }
+
+    private BankUser getIdentityForUpdate(UUID userId) {
+        return bankUserRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new IdentityNotFoundException(userId));
     }
 }
