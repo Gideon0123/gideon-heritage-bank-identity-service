@@ -5,24 +5,24 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.hibernate.exception.ConstraintViolationException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.EmailAlreadyRegisteredException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidIdentityStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidRegistrationException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.PhoneNumberAlreadyRegisteredException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.RoleConfigurationException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidIdentityStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -33,6 +33,7 @@ public class IdentityService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final IdentityMapper identityMapper;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public IdentityResponse registerCustomer(RegisterRequest request) {
@@ -71,29 +72,30 @@ public class IdentityService {
 
         user.addRole(customerRole);
 
-        /*
-         * saveAndFlush forces pending SQL operations to be sent to the
-         * database before this method returns. This allows unique
-         * constraint violations to surface within this method's execution.
-         *
-         * The database unique constraints remain essential because two
-         * concurrent registrations can both pass the preliminary checks.
-         */
         BankUser savedUser;
 
         try {
+            /*
+             * Flush here so database uniqueness conflicts surface within
+             * this method and can be translated correctly.
+             */
             savedUser = bankUserRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException exception) {
             throw translateRegistrationConflict(exception);
         }
+
+        /*
+         * Creates the hashed verification token and registers an
+         * after-commit event. Both participate in this transaction.
+         */
+        emailVerificationService.createVerificationToken(savedUser);
 
         return identityMapper.toIdentityResponse(savedUser);
     }
 
     private void validatePasswordConfirmation(RegisterRequest request) {
 
-        if (request.getPassword() == null
-                || request.getConfirmPassword() == null
+        if (request.getPassword() == null || request.getConfirmPassword() == null
                 || !request.getPassword().equals(request.getConfirmPassword())) {
 
             throw new InvalidRegistrationException(
@@ -134,21 +136,18 @@ public class IdentityService {
     }
 
     private void validateEmailUniqueness(String email) {
-
         if (bankUserRepository.existsByEmail(email)) {
             throw new EmailAlreadyRegisteredException();
         }
     }
 
     private void validatePhoneNumberUniqueness(String phoneNumber) {
-
         if (bankUserRepository.existsByPhoneNumber(phoneNumber)) {
             throw new PhoneNumberAlreadyRegisteredException();
         }
     }
 
     private String normalizeName(String value) {
-
         if (value == null) {
             return "";
         }
@@ -157,7 +156,6 @@ public class IdentityService {
     }
 
     private String normalizeEmail(String email) {
-
         if (email == null) {
             return "";
         }
@@ -166,7 +164,6 @@ public class IdentityService {
     }
 
     private String normalizePhoneNumber(String phoneNumber) {
-
         if (phoneNumber == null) {
             return "";
         }
@@ -192,8 +189,6 @@ public class IdentityService {
             }
         }
 
-        // Unknown integrity failures must not be misreported as duplicate emails
-        // or phone numbers. Let the existing global handler handle the conflict.
         return exception;
     }
 
