@@ -54,14 +54,6 @@ public class AuthenticationController {
     @Value("${identity.security.cookies.same-site:Lax}")
     private String sameSite;
 
-    /*
-     * ============================================================
-     * CSRF TOKEN
-     * ============================================================
-     *
-     * Call this endpoint before making cookie-authenticated
-     * state-changing requests.
-     */
     @GetMapping("/csrf")
     public ResponseEntity<ApiResponse<Map<String, String>>> csrf(
             CsrfToken csrfToken,
@@ -276,6 +268,4 @@ public class AuthenticationController {
                 ? UUID.randomUUID().toString()
                 : traceId;
     }
-
-//    private static final int HttpStatusCode = 200;
 }
