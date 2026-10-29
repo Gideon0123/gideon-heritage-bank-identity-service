@@ -11,4 +11,15 @@ public record AuthenticationResult(
         Instant accessTokenExpiresAt,
         Instant refreshTokenExpiresAt
 ) {
+
+    @Override
+    public String toString() {
+        return "AuthenticationResult[" +
+                "identity=" + identity +
+                ", accessToken=[REDACTED]" +
+                ", refreshToken=[REDACTED]" +
+                ", accessTokenExpiresAt=" + accessTokenExpiresAt +
+                ", refreshTokenExpiresAt=" + refreshTokenExpiresAt +
+                ']';
+    }
 }

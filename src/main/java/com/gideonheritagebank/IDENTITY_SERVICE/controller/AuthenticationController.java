@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -26,7 +27,10 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping({
+        "/auth",
+        "/api/v1/identity/auth"
+})
 @RequiredArgsConstructor
 public class AuthenticationController {
 
@@ -55,8 +59,8 @@ public class AuthenticationController {
      * CSRF TOKEN
      * ============================================================
      *
-     * Call this endpoint before making cookie-authenticated POST,
-     * PUT, PATCH, or DELETE requests.
+     * Call this endpoint before making cookie-authenticated
+     * state-changing requests.
      */
     @GetMapping("/csrf")
     public ResponseEntity<ApiResponse<Map<String, String>>> csrf(
@@ -73,7 +77,7 @@ public class AuthenticationController {
         ApiResponse<Map<String, String>> response =
                 ApiResponse.success(
                         "CSRF token generated",
-                        200,
+                        HttpStatus.OK.value(),
                         data,
                         traceId(request)
                 );
@@ -114,20 +118,14 @@ public class AuthenticationController {
         ApiResponse<IdentityResponse> response =
                 ApiResponse.success(
                         "Login successful",
-                        200,
+                        HttpStatus.OK.value(),
                         result.identity(),
                         traceId(request)
                 );
 
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        accessCookie.toString()
-                )
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        refreshCookie.toString()
-                )
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(response);
@@ -173,14 +171,8 @@ public class AuthenticationController {
                 );
 
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        accessCookie.toString()
-                )
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        refreshCookie.toString()
-                )
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(response);
@@ -212,13 +204,12 @@ public class AuthenticationController {
                 refreshCookiePath
         );
 
-        ApiResponse<Void> response =
-                ApiResponse.success(
-                        "Logged out successfully",
-                        200,
-                        null,
-                        traceId(request)
-                );
+        ApiResponse<Void> response = ApiResponse.success(
+                "Logged out successfully",
+                HttpStatus.OK.value(),
+                null,
+                traceId(request)
+        );
 
         return ResponseEntity.ok()
                 .header(
@@ -238,7 +229,6 @@ public class AuthenticationController {
      * COOKIE HELPERS
      * ============================================================
      */
-
     private ResponseCookie createCookie(
             String name,
             String value,
@@ -282,10 +272,10 @@ public class AuthenticationController {
 
         String traceId = request.getHeader("X-Request-Id");
 
-        if (traceId == null || traceId.isBlank()) {
-            return UUID.randomUUID().toString();
-        }
-
-        return traceId;
+        return traceId == null || traceId.isBlank()
+                ? UUID.randomUUID().toString()
+                : traceId;
     }
+
+//    private static final int HttpStatusCode = 200;
 }

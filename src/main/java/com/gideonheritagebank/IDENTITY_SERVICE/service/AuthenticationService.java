@@ -76,9 +76,7 @@ public class AuthenticationService {
     public AuthenticationResult login(LoginRequest request) {
 
         String email = normalizeEmail(request.getEmail());
-
         String rawPassword = request.getPassword();
-
         Optional<BankUser> userOptional = bankUserRepository.findByEmailForUpdate(email);
 
         /*
@@ -86,12 +84,7 @@ public class AuthenticationService {
          * perform a dummy Argon2 comparison and return a generic error.
          */
         if (userOptional.isEmpty()) {
-
-            passwordEncoder.matches(
-                    rawPassword,
-                    dummyPasswordHash
-            );
-
+            passwordEncoder.matches(rawPassword, dummyPasswordHash);
             throw new AuthenticationFailedException();
         }
 
