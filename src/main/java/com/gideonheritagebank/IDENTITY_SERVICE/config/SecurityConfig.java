@@ -76,12 +76,10 @@ public class SecurityConfig {
             SecurityApiErrorHandler securityApiErrorHandler
     ) throws Exception {
 
-        JwtAuthenticationConverter jwtAuthenticationConverter =
-                jwtAuthenticationConverter();
+        JwtAuthenticationConverter jwtAuthenticationConverter = jwtAuthenticationConverter();
 
         http
                 .csrf(csrf -> csrf
-//                        .accessDeniedHandler(securityApiErrorHandler)
 
                         .ignoringRequestMatchers(
                                 "/auth/register",
@@ -93,30 +91,20 @@ public class SecurityConfig {
 
                                 "/auth/verify-email",
                                 "/api/v1/identity/auth/verify-email",
-
                                 "/auth/forgot-password",
                                 "/api/v1/identity/auth/forgot-password",
-
                                 "/auth/reset-password",
                                 "/api/v1/identity/auth/reset-password",
-
                                 "/auth/refresh-token",
                                 "/api/v1/identity/auth/refresh-token"
                         )
 
-                        .csrfTokenRepository(
-                                CookieCsrfTokenRepository.withHttpOnlyFalse()
-                        )
-
-                        .csrfTokenRequestHandler(
-                                new CsrfTokenRequestAttributeHandler()
-                        )
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 )
 
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .authorizeHttpRequests(authorize -> authorize
@@ -179,31 +167,23 @@ public class SecurityConfig {
      */
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
 
-        JwtGrantedAuthoritiesConverter scopeConverter =
-                new JwtGrantedAuthoritiesConverter();
-
-        JwtAuthenticationConverter converter =
-                new JwtAuthenticationConverter();
+        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
 
-            Collection<GrantedAuthority> authorities =
-                    new ArrayList<>(scopeConverter.convert(jwt));
+            Collection<GrantedAuthority> authorities = new ArrayList<>(scopeConverter.convert(jwt));
 
             Object rolesClaim = jwt.getClaims().get("roles");
 
             if (rolesClaim instanceof Collection<?> roles) {
                 for (Object role : roles) {
-                    if (role instanceof String roleName
-                            && !roleName.isBlank()) {
+                    if (role instanceof String roleName && !roleName.isBlank()) {
 
                         String authority = roleName.startsWith("ROLE_")
-                                ? roleName
-                                : "ROLE_" + roleName;
+                                ? roleName : "ROLE_" + roleName;
 
-                        authorities.add(
-                                new SimpleGrantedAuthority(authority)
-                        );
+                        authorities.add(new SimpleGrantedAuthority(authority));
                     }
                 }
             }

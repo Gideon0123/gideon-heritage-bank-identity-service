@@ -396,10 +396,9 @@ public class AuthenticationService {
 
     private void revokeAllActiveRefreshTokens(BankUser user) {
 
-        List<RefreshToken> tokens =
-                refreshTokenRepository.findAllByUser_Id(
-                        user.getId()
-                );
+        List<RefreshToken> tokens = refreshTokenRepository.findAllByUser_Id(
+                user.getId()
+        );
 
         Instant now = Instant.now();
 
