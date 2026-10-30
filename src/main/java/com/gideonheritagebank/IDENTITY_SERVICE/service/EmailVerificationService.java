@@ -51,8 +51,7 @@ public class EmailVerificationService {
      */
     @Transactional
     public void createVerificationToken(BankUser user) {
-        if (user.getUserType() == null
-                || !user.getUserType().name().equals("CUSTOMER")) {
+        if (user.getUserType() == null || !user.getUserType().name().equals("CUSTOMER")) {
             throw new IllegalArgumentException(
                     "Email-verification tokens can only be issued to customers"
             );

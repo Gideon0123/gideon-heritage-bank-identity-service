@@ -37,8 +37,7 @@ public class IdentityController {
             @Valid @RequestBody RegisterRequest requestBody,
             HttpServletRequest request
     ) {
-        IdentityResponse identity =
-                identityService.registerCustomer(requestBody);
+        IdentityResponse identity = identityService.registerCustomer(requestBody);
 
         ApiResponse<IdentityResponse> response = ApiResponse.success(
                 "Account created. Verify your email before logging in. " +
@@ -87,7 +86,8 @@ public class IdentityController {
          * verified, or eligible for a verification email.
          */
         ApiResponse<Void> response = ApiResponse.success(
-                "If an eligible unverified customer account exists for that email, a new verification email will be requested.",
+                "If an eligible unverified customer account exists for that email, " +
+                        "a new verification email will be requested.",
                 HttpStatus.ACCEPTED.value(),
                 null,
                 traceId(request)
@@ -102,7 +102,6 @@ public class IdentityController {
         String traceId = request.getHeader("X-Request-Id");
 
         return traceId == null || traceId.isBlank()
-                ? UUID.randomUUID().toString()
-                : traceId;
+                ? UUID.randomUUID().toString() : traceId;
     }
 }
