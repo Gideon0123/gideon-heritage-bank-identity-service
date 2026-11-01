@@ -4,7 +4,10 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.internal.AuthenticationResult
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.LoginRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ForgotPasswordRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ResetPasswordRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.AuthenticationService;
+import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ import java.util.UUID;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
+    private final PasswordResetService passwordResetService;
 
     @Value("${identity.security.cookies.access-name:ACCESS_TOKEN}")
     private String accessCookieName;
@@ -201,6 +205,59 @@ public class AuthenticationController {
                         expiredRefreshCookie.toString()
                 )
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest requestBody,
+            HttpServletRequest request
+    ) {
+        passwordResetService.requestPasswordReset(
+                requestBody.email()
+        );
+
+        /*
+         * The same response is returned whether or not the email exists.
+         * Do not return the token, reset URL, or account state.
+         */
+
+        ApiResponse<Void> response = ApiResponse.success(
+                "If an eligible account exists for that email, "
+                        + "password reset instructions will be sent.",
+                HttpStatus.ACCEPTED.value(),
+                null,
+                traceId(request)
+        );
+
+        return ResponseEntity.accepted()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest requestBody,
+            HttpServletRequest request
+    ) {
+        passwordResetService.resetPassword(
+                requestBody.token(),
+                requestBody.newPassword(),
+                requestBody.confirmPassword()
+        );
+
+        ApiResponse<Void> response = ApiResponse.success(
+                "Password reset successfully. You can now log in "
+                        + "using your new password.",
+                HttpStatus.OK.value(),
+                null,
+                traceId(request)
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(response);
     }
 

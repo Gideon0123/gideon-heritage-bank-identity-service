@@ -62,6 +62,27 @@ public class RabbitMQConfig {
                 .with(routingKey);
     }
 
+    @Bean
+    public Queue passwordResetQueue(
+            @Value("${identity.messaging.password-reset-queue:identity.password-reset}")
+            String queueName
+    ) {
+        return QueueBuilder.durable(queueName).build();
+    }
+
+    @Bean
+    public Binding passwordResetBinding(
+            Queue passwordResetQueue,
+            DirectExchange identityNotificationExchange,
+            @Value("${identity.messaging.password-reset-routing-key:notification.password-reset}")
+            String routingKey
+    ) {
+        return BindingBuilder
+                .bind(passwordResetQueue)
+                .to(identityNotificationExchange)
+                .with(routingKey);
+    }
+
     /**
      * Explicitly provides RabbitAdmin.
      * RabbitAdmin uses the application's RabbitMQ ConnectionFactory

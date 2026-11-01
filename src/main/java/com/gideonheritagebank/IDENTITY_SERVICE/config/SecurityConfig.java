@@ -85,7 +85,9 @@ public class SecurityConfig {
                                 "/auth/register",
                                 "/api/v1/identity/auth/register",
                                 "/api/v1/identity/register",
-
+                                "/api/v1/identity/forgot-password",
+                                "/api/v1/identity/reset-password",
+                                "/api/v1/identity/resend-verification",
                                 "/auth/login",
                                 "/api/v1/identity/auth/login",
                                 "/auth/verify-email",
@@ -141,6 +143,7 @@ public class SecurityConfig {
                                 "/api/v1/identity/register",
                                 "/api/v1/identity/verify-email",
                                 "/api/v1/identity/forgot-password",
+                                "/api/v1/identity/resend-verification",
                                 "/api/v1/identity/reset-password"
                         ).permitAll()
 
