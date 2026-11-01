@@ -4,6 +4,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.EmailVerificationToken;
 import com.gideonheritagebank.IDENTITY_SERVICE.event.EmailVerificationRequestedEvent;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.ConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalArgumentException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.VerificationTokenExpired;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
@@ -12,10 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -75,15 +74,13 @@ public class EmailVerificationService {
 
         String tokenHash = hashToken(rawToken.trim());
 
-        EmailVerificationToken token = tokenRepository
-                .findByTokenHashForUpdate(tokenHash)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
+        EmailVerificationToken token = tokenRepository.findByTokenHashForUpdate(tokenHash)
+                .orElseThrow(() -> new BadRequest(
                         "The verification token is invalid"
                 ));
 
         if (token.getUsedAt() != null) {
-            throw new BadRequest("The verification token has already been used");
+            throw new ConflictException("The verification token has already been used");
         }
 
         Instant now = Instant.now();

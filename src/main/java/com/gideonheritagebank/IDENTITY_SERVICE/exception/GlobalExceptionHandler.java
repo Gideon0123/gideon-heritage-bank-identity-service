@@ -131,6 +131,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflict(
+            ConflictException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableMessage(
@@ -282,8 +295,6 @@ public class GlobalExceptionHandler {
                 traceId
         );
 
-        return ResponseEntity
-                .status(status)
-                .body(body);
+        return ResponseEntity.status(status).body(body);
     }
 }

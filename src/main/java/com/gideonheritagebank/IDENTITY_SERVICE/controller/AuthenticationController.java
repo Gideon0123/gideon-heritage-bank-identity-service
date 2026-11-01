@@ -27,10 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({
-        "/auth",
-        "/api/v1/identity/auth"
-})
+@RequestMapping({"/auth", "/api/v1/identity/auth", "/api/v1/identity"})
 @RequiredArgsConstructor
 public class AuthenticationController {
 
@@ -59,20 +56,18 @@ public class AuthenticationController {
             CsrfToken csrfToken,
             HttpServletRequest request
     ) {
-
         Map<String, String> data = Map.of(
                 "headerName", csrfToken.getHeaderName(),
                 "parameterName", csrfToken.getParameterName(),
                 "token", csrfToken.getToken()
         );
 
-        ApiResponse<Map<String, String>> response =
-                ApiResponse.success(
-                        "CSRF token generated",
-                        HttpStatus.OK.value(),
-                        data,
-                        traceId(request)
-                );
+        ApiResponse<Map<String, String>> response = ApiResponse.success(
+                "CSRF token generated",
+                HttpStatus.OK.value(),
+                data,
+                traceId(request)
+        );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -89,9 +84,7 @@ public class AuthenticationController {
             @Valid @RequestBody LoginRequest requestBody,
             HttpServletRequest request
     ) {
-
-        AuthenticationResult result =
-                authenticationService.login(requestBody);
+        AuthenticationResult result = authenticationService.login(requestBody);
 
         ResponseCookie accessCookie = createCookie(
                 accessCookieName,
@@ -107,13 +100,12 @@ public class AuthenticationController {
                 result.refreshTokenExpiresAt()
         );
 
-        ApiResponse<IdentityResponse> response =
-                ApiResponse.success(
-                        "Login successful",
-                        HttpStatus.OK.value(),
-                        result.identity(),
-                        traceId(request)
-                );
+        ApiResponse<IdentityResponse> response = ApiResponse.success(
+                "Login successful",
+                HttpStatus.OK.value(),
+                result.identity(),
+                traceId(request)
+        );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -136,9 +128,7 @@ public class AuthenticationController {
             ) String refreshToken,
             HttpServletRequest request
     ) {
-
-        AuthenticationResult result =
-                authenticationService.refresh(refreshToken);
+        AuthenticationResult result = authenticationService.refresh(refreshToken);
 
         ResponseCookie accessCookie = createCookie(
                 accessCookieName,
@@ -154,13 +144,12 @@ public class AuthenticationController {
                 result.refreshTokenExpiresAt()
         );
 
-        ApiResponse<IdentityResponse> response =
-                ApiResponse.success(
-                        "Token refreshed successfully",
-                        200,
-                        result.identity(),
-                        traceId(request)
-                );
+        ApiResponse<IdentityResponse> response = ApiResponse.success(
+                "Token refreshed successfully",
+                200,
+                result.identity(),
+                traceId(request)
+        );
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -183,7 +172,6 @@ public class AuthenticationController {
             ) String refreshToken,
             HttpServletRequest request
     ) {
-
         authenticationService.logout(refreshToken);
 
         ResponseCookie expiredAccessCookie = expireCookie(
@@ -227,11 +215,7 @@ public class AuthenticationController {
             String path,
             Instant expiresAt
     ) {
-
-        Duration maxAge = Duration.between(
-                Instant.now(),
-                expiresAt
-        );
+        Duration maxAge = Duration.between(Instant.now(), expiresAt);
 
         if (maxAge.isNegative() || maxAge.isZero()) {
             maxAge = Duration.ZERO;
@@ -250,7 +234,6 @@ public class AuthenticationController {
             String name,
             String path
     ) {
-
         return ResponseCookie.from(name, "")
                 .httpOnly(true)
                 .secure(secureCookies)
@@ -265,7 +248,6 @@ public class AuthenticationController {
         String traceId = request.getHeader("X-Request-Id");
 
         return traceId == null || traceId.isBlank()
-                ? UUID.randomUUID().toString()
-                : traceId;
+                ? UUID.randomUUID().toString() : traceId;
     }
 }

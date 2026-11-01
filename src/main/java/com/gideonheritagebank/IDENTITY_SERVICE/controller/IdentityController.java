@@ -21,11 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({
-        "/auth",
-        "/api/v1/identity/auth",
-        "/api/v1/identity"
-})
+@RequestMapping({"/auth", "/api/v1/identity/auth", "/api/v1/identity"})
 @RequiredArgsConstructor
 public class IdentityController {
 
@@ -49,8 +45,7 @@ public class IdentityController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .cacheControl(CacheControl.noStore())
-                .body(response);
+                .cacheControl(CacheControl.noStore()).body(response);
     }
 
     @PostMapping("/verify-email")
@@ -67,9 +62,7 @@ public class IdentityController {
                 traceId(request)
         );
 
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.noStore())
-                .body(response);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(response);
     }
 
     @PostMapping("/resend-verification")
@@ -93,9 +86,7 @@ public class IdentityController {
                 traceId(request)
         );
 
-        return ResponseEntity.accepted()
-                .cacheControl(CacheControl.noStore())
-                .body(response);
+        return ResponseEntity.accepted().cacheControl(CacheControl.noStore()).body(response);
     }
 
     private String traceId(HttpServletRequest request) {

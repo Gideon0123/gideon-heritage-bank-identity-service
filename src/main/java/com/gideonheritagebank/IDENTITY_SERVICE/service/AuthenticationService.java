@@ -119,7 +119,7 @@ public class AuthenticationService {
                 user.setFailedLoginAttempts(0);
 
             } else {
-                throw new AccountLockedException("Account is locked. Please try again later or Verify your email if you haven't done so.");
+                throw new AuthenticationFailedException();
             }
         }
 
@@ -127,8 +127,7 @@ public class AuthenticationService {
          * Do not authenticate disabled or unverified accounts.
          */
         if (!user.isEnabled() || !user.isEmailVerified()) {
-
-            throw new AuthenticationFailedException();
+            throw new AccountLockedException("Account is locked. Please try again later or Verify your email if you haven't done so.");
         }
 
         /*
@@ -368,7 +367,6 @@ public class AuthenticationService {
         }
 
         String tokenHash = hashToken(rawRefreshToken);
-
         Optional<RefreshToken> tokenOptional =
                 refreshTokenRepository.findByTokenHashForUpdate(
                         tokenHash
@@ -381,9 +379,7 @@ public class AuthenticationService {
         RefreshToken refreshToken = tokenOptional.get();
 
         if (refreshToken.getRevokedAt() == null) {
-
             refreshToken.setRevokedAt(Instant.now());
-
             refreshTokenRepository.saveAndFlush(refreshToken);
         }
     }
@@ -405,7 +401,6 @@ public class AuthenticationService {
         for (RefreshToken token : tokens) {
 
             if (token.getRevokedAt() == null) {
-
                 token.setRevokedAt(now);
             }
         }
@@ -416,12 +411,9 @@ public class AuthenticationService {
     private String normalizeEmail(String email) {
 
         if (email == null || email.isBlank()) {
-
             throw new AuthenticationFailedException();
         }
-
-        return email.trim()
-                .toLowerCase(Locale.ROOT);
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private String generateRefreshToken() {
@@ -430,25 +422,19 @@ public class AuthenticationService {
 
         secureRandom.nextBytes(randomBytes);
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
     private String hashToken(String token) {
 
         try {
-
-            MessageDigest messageDigest =
-                    MessageDigest.getInstance("SHA-256");
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
 
             byte[] hash = messageDigest.digest(
                     token.getBytes(StandardCharsets.UTF_8)
             );
 
-            return Base64.getUrlEncoder()
-                    .withoutPadding()
-                    .encodeToString(hash);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
 
         } catch (NoSuchAlgorithmException exception) {
 
