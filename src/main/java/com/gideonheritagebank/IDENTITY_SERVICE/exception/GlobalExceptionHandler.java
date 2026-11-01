@@ -118,6 +118,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleLockedAccount(
+            AccountLockedException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.FORBIDDEN,
+                exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableMessage(

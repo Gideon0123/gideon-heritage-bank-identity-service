@@ -5,6 +5,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.LoginRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.RefreshToken;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.AccountLockedException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.AuthenticationFailedException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
@@ -118,8 +119,7 @@ public class AuthenticationService {
                 user.setFailedLoginAttempts(0);
 
             } else {
-
-                throw new AuthenticationFailedException();
+                throw new AccountLockedException("Account is locked. Please try again later or Verify your email if you haven't done so.");
             }
         }
 

@@ -88,9 +88,10 @@ public class SecurityConfig {
 
                                 "/auth/login",
                                 "/api/v1/identity/auth/login",
-
                                 "/auth/verify-email",
                                 "/api/v1/identity/auth/verify-email",
+                                "/auth/resend-verification",
+                                "/api/v1/identity/auth/resend-verification",
                                 "/auth/forgot-password",
                                 "/api/v1/identity/auth/forgot-password",
                                 "/auth/reset-password",
@@ -122,6 +123,7 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/register",
                                 "/auth/verify-email",
+                                "/auth/resend-verification",
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/auth/refresh-token",
@@ -130,6 +132,7 @@ public class SecurityConfig {
                                 "/api/v1/identity/auth/login",
                                 "/api/v1/identity/auth/register",
                                 "/api/v1/identity/auth/verify-email",
+                                "/api/v1/identity/auth/resend-verification",
                                 "/api/v1/identity/auth/forgot-password",
                                 "/api/v1/identity/auth/reset-password",
                                 "/api/v1/identity/auth/refresh-token",
