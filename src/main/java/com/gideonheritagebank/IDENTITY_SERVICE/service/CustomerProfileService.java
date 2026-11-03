@@ -4,6 +4,8 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateCustomerProfile
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

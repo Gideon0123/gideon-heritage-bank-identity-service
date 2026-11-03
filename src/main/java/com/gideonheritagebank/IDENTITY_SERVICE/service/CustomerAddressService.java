@@ -6,6 +6,8 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressRespo
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
