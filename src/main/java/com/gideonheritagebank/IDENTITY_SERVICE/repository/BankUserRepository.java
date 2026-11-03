@@ -35,4 +35,6 @@ public interface BankUserRepository extends JpaRepository<BankUser, UUID> {
     Optional<BankUser> findByEmailForUpdate(
             @Param("email") String email
     );
+
+    boolean existsByPhoneNumberAndIdNot(String phoneNumber, UUID id);
 }
