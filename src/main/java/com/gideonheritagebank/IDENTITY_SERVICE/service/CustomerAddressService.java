@@ -1,13 +1,11 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.customer.CreateCustomerAddressRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.customer.CustomerAddressResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.customer.UpdateCustomerAddressRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CreateCustomerAddressRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateCustomerAddressRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,14 +39,13 @@ public class CustomerAddressService {
             UUID customerId,
             CreateCustomerAddressRequest request
     ) {
-
         BankUser customer = getCustomerForUpdate(customerId);
 
-        boolean hasExistingAddresses =
-                userAddressRepository.existsByUser_Id(customerId);
+        boolean hasPrimaryAddress = customer.getAddresses()
+                .stream()
+                .anyMatch(UserAddress::isPrimary);
 
-        boolean makePrimary =
-                Boolean.TRUE.equals(request.primary()) || !hasExistingAddresses;
+        boolean makePrimary = Boolean.TRUE.equals(request.primary()) || !hasPrimaryAddress;
 
         if (makePrimary) {
             removePrimaryDesignation(customer);
@@ -78,7 +75,6 @@ public class CustomerAddressService {
             UUID addressId,
             UpdateCustomerAddressRequest request
     ) {
-
         BankUser customer = getCustomerForUpdate(customerId);
 
         UserAddress address = getCustomerAddress(customerId, addressId);
