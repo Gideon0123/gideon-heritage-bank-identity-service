@@ -8,6 +8,10 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ForgotPasswordRequest
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ResetPasswordRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.AuthenticationService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordResetService;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ChangePasswordRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordChangeService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -36,6 +41,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final PasswordResetService passwordResetService;
+    private final PasswordChangeService passwordChangeService;
 
     @Value("${identity.security.cookies.access-name:ACCESS_TOKEN}")
     private String accessCookieName;
@@ -256,6 +262,65 @@ public class AuthenticationController {
         );
 
         return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body(response);
+    }
+
+    /*
+     * ============================================================
+     * CHANGE PASSWORD
+     * ============================================================
+     */
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest requestBody,
+            HttpServletRequest request
+    ) {
+
+        /*
+         * The JWT subject is the authenticated user's UUID.
+         * The client cannot choose which user's password to change.
+         */
+
+        UUID userId = UUID.fromString(Objects.requireNonNull(jwt.getSubject()));
+
+        passwordChangeService.changePassword(
+                userId,
+                requestBody.currentPassword(),
+                requestBody.newPassword(),
+                requestBody.confirmPassword()
+        );
+
+        ApiResponse<Void> response = ApiResponse.success(
+                "Password changed successfully. Please log in again "
+                        + "with your new password.",
+                HttpStatus.OK.value(),
+                null,
+                traceId(request)
+        );
+
+        ResponseCookie expiredAccessCookie = expireCookie(
+                accessCookieName,
+                accessCookiePath
+        );
+
+        ResponseCookie expiredRefreshCookie = expireCookie(
+                refreshCookieName,
+                refreshCookiePath
+        );
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        expiredAccessCookie.toString()
+                )
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        expiredRefreshCookie.toString()
+                )
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(response);
