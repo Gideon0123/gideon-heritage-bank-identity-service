@@ -42,7 +42,6 @@ public class AdminCustomerService {
             Pageable pageable
     ) {
         validateDateRange(filter);
-
         Pageable validatedPageable = validateAndBuildPageable(pageable);
 
         Page<BankUser> customers = bankUserRepository.findAll(
@@ -67,20 +66,12 @@ public class AdminCustomerService {
 
     private Pageable validateAndBuildPageable(Pageable pageable) {
 
-        int pageNumber = pageable.getPageNumber();
-
-        int pageSize = Math.min(
-                pageable.getPageSize(),
-                MAX_PAGE_SIZE
-        );
+        int pageNumber = Math.max(pageable.getPageNumber() - 1, 0);
+        int pageSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
 
         Sort sort = validateSort(pageable.getSort());
 
-        return PageRequest.of(
-                pageNumber,
-                pageSize,
-                sort
-        );
+        return PageRequest.of(pageNumber, pageSize, sort);
     }
 
     private Sort validateSort(Sort requestedSort) {

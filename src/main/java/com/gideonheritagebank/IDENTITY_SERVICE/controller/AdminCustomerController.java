@@ -43,7 +43,7 @@ public class AdminCustomerController {
             @ModelAttribute CustomerFilterRequest filter,
 
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC

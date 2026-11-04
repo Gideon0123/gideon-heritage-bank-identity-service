@@ -23,7 +23,7 @@ public class PagedResponse<T> {
     public static <T> PagedResponse<T> from(Page<T> page) {
         return PagedResponse.<T>builder()
                 .content(page.getContent())
-                .page(page.getNumber() + 1)
+                .page(page.getNumber() + 1) // Convert to 1-based index
                 .size(page.getSize())
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages())
