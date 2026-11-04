@@ -1,6 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerFilterRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerSearchRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
@@ -8,6 +9,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSearchSpecification;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -62,6 +64,22 @@ public class AdminCustomerService {
                 ));
 
         return identityMapper.toCustomerProfileResponse(customer);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CustomerProfileResponse> searchCustomers(
+            CustomerSearchRequest request,
+            Pageable pageable
+    ) {
+//        validatePageSize(pageable);
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
+
+        Page<BankUser> customers = bankUserRepository.findAll(
+                CustomerSearchSpecification.search(request),
+                validatedPageable
+        );
+
+        return customers.map(identityMapper::toCustomerProfileResponse);
     }
 
     private Pageable validateAndBuildPageable(Pageable pageable) {

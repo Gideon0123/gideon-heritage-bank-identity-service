@@ -88,8 +88,6 @@ public class BankUser {
 
     @Column(
             name = "customer_number",
-            nullable = false,
-            unique = true,
             length = 12,
             updatable = false
     )
