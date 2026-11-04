@@ -28,6 +28,10 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uq_bank_users_phone",
                         columnNames = "phone_number"
+                ),
+                @UniqueConstraint(
+                        name = "uq_bank_users_customer_number",
+                        columnNames = "customer_number"
                 )
         },
         indexes = {
@@ -81,6 +85,15 @@ public class BankUser {
 
     @Column(name = "profile_photo_url", length = 1000)
     private String profilePhotoUrl;
+
+    @Column(
+            name = "customer_number",
+            nullable = false,
+            unique = true,
+            length = 12,
+            updatable = false
+    )
+    private String customerNumber;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -170,6 +183,33 @@ public class BankUser {
         user.setPhoneNumber(phoneNumber);
         user.setPasswordHash(passwordHash);
         user.setUserType(UserType.CUSTOMER);
+        user.setEnabled(true);
+        user.setEmailVerified(false);
+        user.setAccountNonLocked(true);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+
+        return user;
+    }
+
+    public static BankUser createCustomer(
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            String passwordHash,
+            String customerNumber
+    ) {
+        BankUser user = new BankUser();
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPhoneNumber(phoneNumber);
+        user.setPasswordHash(passwordHash);
+        user.setCustomerNumber(customerNumber);
+        user.setUserType(UserType.CUSTOMER);
+
         user.setEnabled(true);
         user.setEmailVerified(false);
         user.setAccountNonLocked(true);

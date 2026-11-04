@@ -48,4 +48,7 @@ public interface BankUserRepository
             @Param("email") String email
     );
 
+    @Query(value = "SELECT nextval('customer_number_seq')", nativeQuery = true)
+    Long nextCustomerNumberSequence();
+
 }
