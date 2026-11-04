@@ -8,6 +8,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class CustomerAddressService {
 
     private final BankUserRepository bankUserRepository;
     private final UserAddressRepository userAddressRepository;
+    private final IdentityMapper identityMapper;
 
     @Transactional(readOnly = true)
     public List<CustomerAddressResponse> getMyAddresses(UUID customerId) {
@@ -32,7 +34,7 @@ public class CustomerAddressService {
         return userAddressRepository
                 .findAllByUser_IdOrderByCreatedAtDesc(customer.getId())
                 .stream()
-                .map(this::mapToResponse)
+                .map(identityMapper::toCustomerAddressResponse)
                 .toList();
     }
 
@@ -41,13 +43,15 @@ public class CustomerAddressService {
             UUID customerId,
             CreateCustomerAddressRequest request
     ) {
+
         BankUser customer = getCustomerForUpdate(customerId);
 
         boolean hasPrimaryAddress = customer.getAddresses()
                 .stream()
                 .anyMatch(UserAddress::isPrimary);
 
-        boolean makePrimary = Boolean.TRUE.equals(request.primary()) || !hasPrimaryAddress;
+        boolean makePrimary =
+                Boolean.TRUE.equals(request.primary()) || !hasPrimaryAddress;
 
         if (makePrimary) {
             removePrimaryDesignation(customer);
@@ -68,7 +72,7 @@ public class CustomerAddressService {
 
         bankUserRepository.saveAndFlush(customer);
 
-        return mapToResponse(address);
+        return identityMapper.toCustomerAddressResponse(address);
     }
 
     @Transactional
@@ -77,6 +81,7 @@ public class CustomerAddressService {
             UUID addressId,
             UpdateCustomerAddressRequest request
     ) {
+
         BankUser customer = getCustomerForUpdate(customerId);
 
         UserAddress address = getCustomerAddress(customerId, addressId);
@@ -129,7 +134,9 @@ public class CustomerAddressService {
             promoteAnotherAddress(customer, address);
         }
 
-        return mapToResponse(userAddressRepository.saveAndFlush(address));
+        UserAddress savedAddress = userAddressRepository.saveAndFlush(address);
+
+        return identityMapper.toCustomerAddressResponse(savedAddress);
     }
 
     @Transactional
@@ -164,7 +171,9 @@ public class CustomerAddressService {
 
         address.setPrimary(true);
 
-        return mapToResponse(userAddressRepository.saveAndFlush(address));
+        UserAddress savedAddress = userAddressRepository.saveAndFlush(address);
+
+        return identityMapper.toCustomerAddressResponse(savedAddress);
     }
 
     private BankUser getCustomer(UUID customerId) {
@@ -204,9 +213,7 @@ public class CustomerAddressService {
             UUID customerId,
             UUID addressId
     ) {
-
-        return userAddressRepository
-                .findByIdAndUser_Id(addressId, customerId)
+        return userAddressRepository.findByIdAndUser_Id(addressId, customerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Address was not found"
                 ));
@@ -247,22 +254,5 @@ public class CustomerAddressService {
 
     private String normalizeCountryCode(String value) {
         return value.trim().toUpperCase();
-    }
-
-    private CustomerAddressResponse mapToResponse(UserAddress address) {
-
-        return new CustomerAddressResponse(
-                address.getId(),
-                address.getAddressLine1(),
-                address.getAddressLine2(),
-                address.getCity(),
-                address.getStateOrRegion(),
-                address.getPostalCode(),
-                address.getCountryCode(),
-                address.getAddressType(),
-                address.isPrimary(),
-                address.getCreatedAt(),
-                address.getUpdatedAt()
-        );
     }
 }

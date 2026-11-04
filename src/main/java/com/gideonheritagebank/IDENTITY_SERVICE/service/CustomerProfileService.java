@@ -4,8 +4,9 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateCustomerProfile
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
+import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,13 @@ import java.util.UUID;
 public class CustomerProfileService {
 
     private final BankUserRepository bankUserRepository;
+    private final IdentityMapper identityMapper;
 
     @Transactional(readOnly = true)
     public CustomerProfileResponse getMyProfile(UUID customerId) {
 
         BankUser customer = getCustomer(customerId);
-        return mapToResponse(customer);
+        return identityMapper.toCustomerProfileResponse(customer);
     }
 
     @Transactional
@@ -59,7 +61,7 @@ public class CustomerProfileService {
 
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return mapToResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     private BankUser getCustomer(UUID customerId) {
@@ -101,22 +103,5 @@ public class CustomerProfileService {
 
     private String normalizePhoneNumber(String value) {
         return value.trim();
-    }
-
-    private CustomerProfileResponse mapToResponse(BankUser user) {
-
-        return new CustomerProfileResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPhoneNumber(),
-                user.getProfilePhotoUrl(),
-                user.getUserType(),
-                user.isEnabled(),
-                user.isEmailVerified(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
     }
 }
