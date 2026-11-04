@@ -143,11 +143,8 @@ public class CustomerAddressService {
     public void deleteAddress(UUID customerId, UUID addressId) {
 
         BankUser customer = getCustomerForUpdate(customerId);
-
         UserAddress address = getCustomerAddress(customerId, addressId);
-
         boolean wasPrimary = address.isPrimary();
-
         customer.removeAddress(address);
 
         if (wasPrimary) {
@@ -164,11 +161,8 @@ public class CustomerAddressService {
     ) {
 
         BankUser customer = getCustomerForUpdate(customerId);
-
         UserAddress address = getCustomerAddress(customerId, addressId);
-
         removePrimaryDesignation(customer);
-
         address.setPrimary(true);
 
         UserAddress savedAddress = userAddressRepository.saveAndFlush(address);

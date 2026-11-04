@@ -106,7 +106,6 @@ public class CustomerController {
             @RequestHeader(value = "X-Request-Id", required = false)
             String requestId
     ) {
-
         UUID customerId = getAuthenticatedUserId(jwt);
 
         CustomerAddressResponse address =

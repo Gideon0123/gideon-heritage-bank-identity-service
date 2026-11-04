@@ -26,7 +26,7 @@ public record CreateCustomerAddressRequest(
         String postalCode,
 
         @NotBlank(message = "Country code is required")
-        @Size(min = 2, max = 2)
+        @Size(min = 2, max = 2, message = "Country code must be a 2-letter ISO code")
         String countryCode,
 
         @NotNull(message = "Address type is required")
