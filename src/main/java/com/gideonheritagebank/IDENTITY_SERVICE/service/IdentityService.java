@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.component.CustomerNumberGenerator;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.RegisterRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
@@ -34,6 +35,7 @@ public class IdentityService {
     private final PasswordEncoder passwordEncoder;
     private final IdentityMapper identityMapper;
     private final EmailVerificationService emailVerificationService;
+    private final CustomerNumberGenerator customerNumberGenerator;
 
     @Transactional
     public IdentityResponse registerCustomer(RegisterRequest request) {
@@ -67,7 +69,8 @@ public class IdentityService {
                 lastName,
                 email,
                 phoneNumber,
-                passwordHash
+                passwordHash,
+                customerNumberGenerator.generate()
         );
 
         user.addRole(customerRole);

@@ -6,8 +6,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record CustomerProfileResponse(
-
         UUID id,
+        String customerNumber,
         String firstName,
         String lastName,
         String email,
@@ -18,5 +18,4 @@ public record CustomerProfileResponse(
         boolean emailVerified,
         Instant createdAt,
         Instant updatedAt
-) {
-}
+) {}
