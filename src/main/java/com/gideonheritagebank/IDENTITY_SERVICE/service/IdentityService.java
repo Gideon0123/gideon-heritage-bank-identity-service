@@ -2,6 +2,7 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.component.CustomerNumberGenerator;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.RegisterRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
@@ -212,7 +213,7 @@ public class IdentityService {
     }
 
     @Transactional
-    public IdentityResponse enableCustomer(
+    public CustomerProfileResponse enableCustomer(
             UUID customerId,
             String reason
     ) {
@@ -228,11 +229,11 @@ public class IdentityService {
 
         customer.setEnabled(true);
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse disableCustomer(
+    public CustomerProfileResponse disableCustomer(
             UUID customerId,
             String reason
     ) {
@@ -250,11 +251,11 @@ public class IdentityService {
         authenticationService.revokeAllActiveRefreshTokens(customer);
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse lockCustomer(
+    public CustomerProfileResponse lockCustomer(
             UUID customerId,
             Instant lockedUntil,
             String reason
@@ -280,11 +281,11 @@ public class IdentityService {
         authenticationService.revokeAllActiveRefreshTokens(customer);
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse unlockCustomer(
+    public CustomerProfileResponse unlockCustomer(
             UUID customerId,
             String reason
     ) {
@@ -302,11 +303,11 @@ public class IdentityService {
         customer.setFailedLoginAttempts(0);
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse suspendCustomer(
+    public CustomerProfileResponse suspendCustomer(
             UUID customerId,
             String reason
     ) {
@@ -323,11 +324,11 @@ public class IdentityService {
         authenticationService.revokeAllActiveRefreshTokens(customer);
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse unsuspendCustomer(
+    public CustomerProfileResponse unsuspendCustomer(
             UUID customerId,
             String reason
     ) {
@@ -343,7 +344,7 @@ public class IdentityService {
         customer.unsuspend();
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toIdentityResponse(savedCustomer);
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     private BankUser getCustomerForUpdate(UUID customerId) {

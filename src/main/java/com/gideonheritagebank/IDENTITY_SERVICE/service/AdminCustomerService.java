@@ -12,6 +12,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSearchSpecification;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSpecification;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -89,28 +90,9 @@ public class AdminCustomerService {
         normalizeReason(request.reason());
 
         BankUser customer = getCustomerForUpdate(customerId);
-
         String firstName = normalizeName(request.firstName());
         String lastName = normalizeName(request.lastName());
-        String phoneNumber = normalizePhoneNumber(request.phoneNumber());
-
-        if (firstName.isBlank()) {
-            throw new InvalidIdentityStateException(
-                    "First name is required."
-            );
-        }
-
-        if (lastName.isBlank()) {
-            throw new InvalidIdentityStateException(
-                    "Last name is required."
-            );
-        }
-
-        if (phoneNumber.isBlank()) {
-            throw new InvalidIdentityStateException(
-                    "Phone number is required."
-            );
-        }
+        String phoneNumber = getPhoneNumber(request, firstName, lastName);
 
         if (bankUserRepository.existsByPhoneNumberAndIdNot(
                 phoneNumber,
@@ -133,6 +115,27 @@ public class AdminCustomerService {
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
+    }
+
+    private @NonNull String getPhoneNumber(
+            AdminUpdateCustomerRequest request,
+            String firstName,
+            String lastName
+    ) {
+        String phoneNumber = normalizePhoneNumber(request.phoneNumber());
+
+        if (firstName.isBlank()) {
+            throw new InvalidIdentityStateException("First name is required.");
+        }
+
+        if (lastName.isBlank()) {
+            throw new InvalidIdentityStateException("Last name is required.");
+        }
+
+        if (phoneNumber.isBlank()) {
+            throw new InvalidIdentityStateException("Phone number is required.");
+        }
+        return phoneNumber;
     }
 
     private Pageable validateAndBuildPageable(Pageable pageable) {
@@ -210,10 +213,16 @@ public class AdminCustomerService {
     }
 
     private String normalizeName(String value) {
-        return value.trim();
+        if (value == null) {return "";}
+
+        return value.trim().replaceAll("\\s+", " ");
     }
 
-    private String normalizePhoneNumber(String value) {
-        return value.trim();
+    private String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) {
+            return "";
+        }
+
+        return phoneNumber.trim();
     }
 }

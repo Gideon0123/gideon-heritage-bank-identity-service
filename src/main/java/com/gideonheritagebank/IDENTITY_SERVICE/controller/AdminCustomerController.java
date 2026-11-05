@@ -1,11 +1,11 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.controller;
 
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerFilterRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerSearchRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.AdminCustomerService;
+import com.gideonheritagebank.IDENTITY_SERVICE.service.IdentityService;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -36,11 +36,171 @@ import java.util.UUID;
 public class AdminCustomerController {
 
     private final AdminCustomerService adminCustomerService;
+    private final IdentityService identityService;
 
-    // ==========================================
+    @PostMapping("/{customerId}/enable")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> enableCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody CustomerIdentityActionRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.enableCustomer(
+                customerId,
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity enabled successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{customerId}/disable")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> disableCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody CustomerIdentityActionRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.disableCustomer(
+                customerId,
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity disabled successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{customerId}/lock")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> lockCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody LockCustomerRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.lockCustomer(
+                customerId,
+                requestBody.lockedUntil(),
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity Locked successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{customerId}/unlock")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> unlockCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody CustomerIdentityActionRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.unlockCustomer(
+                customerId,
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity unlocked successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{customerId}/suspend")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> suspendCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody SuspendCustomerRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.suspendCustomer(
+                customerId,
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity Suspended successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{customerId}/unsuspend")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> unsuspendCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody CustomerIdentityActionRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = identityService.unsuspendCustomer(
+                customerId,
+                requestBody.reason()
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Identity suspension removed successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{customerId}")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateCustomer(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody AdminUpdateCustomerRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest request
+    ) {
+        CustomerProfileResponse customer = adminCustomerService.updateCustomerByStaff(
+                customerId,
+                requestBody
+        );
+
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer Profile updated successfully",
+                HttpStatus.OK.value(),
+                customer,
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
     // RETRIEVE ALL CUSTOMERS
-    // ==========================================
-
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<CustomerProfileResponse>>> getCustomers(
 
@@ -69,10 +229,7 @@ public class AdminCustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // ==========================================
     // RETRIEVE CUSTOMER BY ID
-    // ==========================================
-
     @GetMapping("/{customerId}")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> getCustomerById(
 
