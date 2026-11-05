@@ -30,6 +30,10 @@ public interface IdentityMapper {
     default CustomerIdentityStatus resolveCustomerIdentityStatus(
             BankUser user
     ) {
+        if (user.isSuspended()) {
+            return CustomerIdentityStatus.SUSPENDED;
+        }
+
         if (!user.isAccountNonLocked()) {
             return CustomerIdentityStatus.LOCKED;
         }

@@ -176,6 +176,12 @@ public final class CustomerSearchSpecification {
                             cb.isTrue(root.get("enabled")),
                             cb.isTrue(root.get("emailVerified"))
                     );
+
+            case SUSPENDED ->
+                    cb.and(
+                            cb.isFalse(root.get("accountNonLocked")),
+                            cb.isTrue(root.get("enabled"))
+                    );
         };
     }
 

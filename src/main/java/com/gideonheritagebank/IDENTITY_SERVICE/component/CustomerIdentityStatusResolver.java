@@ -9,6 +9,10 @@ public class CustomerIdentityStatusResolver {
 
     public CustomerIdentityStatus resolve(BankUser user) {
 
+        if (user.isSuspended()) {
+            return CustomerIdentityStatus.SUSPENDED;
+        }
+
         if (!user.isAccountNonLocked()) {
             return CustomerIdentityStatus.LOCKED;
         }

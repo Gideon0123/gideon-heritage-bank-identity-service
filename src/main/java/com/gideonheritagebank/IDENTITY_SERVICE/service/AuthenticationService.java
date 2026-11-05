@@ -5,8 +5,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.LoginRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.RefreshToken;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.AccountLockedException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.AuthenticationFailedException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RefreshTokenRepository;
@@ -18,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.IllegalStateException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -111,7 +111,6 @@ public class AuthenticationService {
         if (!user.isAccountNonLocked()) {
 
             Instant lockedUntil = user.getLockedUntil();
-
             if (lockedUntil != null && !lockedUntil.isAfter(now)) {
 
                 user.setAccountNonLocked(true);
@@ -126,7 +125,23 @@ public class AuthenticationService {
         /*
          * Do not authenticate disabled or unverified accounts.
          */
-        if (!user.isEnabled() || !user.isEmailVerified()) {
+        if (user.isSuspended()) {
+            throw new BadRequest(
+                    "Account is suspended. Please contact support for assistance."
+            );
+        }
+
+        if (!user.isEnabled()) {
+            throw new BadRequest(
+                    "Account is disabled. Please contact support for assistance."
+            );
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Please verify your email before logging in.");
+        }
+
+        if (!user.isAccountNonLocked()) {
             throw new AccountLockedException("Account is locked. Please try again later or Verify your email if you haven't done so.");
         }
 
@@ -138,10 +153,7 @@ public class AuthenticationService {
             int failedAttempts = user.getFailedLoginAttempts() + 1;
             user.setFailedLoginAttempts(failedAttempts);
 
-            /*
-             * Apply the timed lock when the configured threshold
-             * is reached.
-             */
+            /* Apply the timed lock when the configured threshold is reached. */
             if (failedAttempts >= maxFailedAttempts) {
 
                 user.setAccountNonLocked(false);
@@ -150,26 +162,20 @@ public class AuthenticationService {
 
             bankUserRepository.saveAndFlush(user);
 
-            /*
-             * The transaction must commit the failed-attempt counter
-             * and any lockout changes despite this exception.
-             */
+            /* The transaction must commit the failed-attempt counter
+              and any lockout changes despite this exception. */
             throw new AuthenticationFailedException();
         }
 
-        /*
-         * Successful authentication:
-         * reset the failed-login counter and stale lock metadata.
-         */
+        /* Successful authentication:
+           reset the failed-login counter and stale lock metadata. */
         user.setFailedLoginAttempts(0);
         user.setAccountNonLocked(true);
         user.setLockedUntil(null);
 
         BankUser authenticatedUser = bankUserRepository.saveAndFlush(user);
 
-        /*
-         * Issue the signed, short-lived access token.
-         */
+        /* Issue the signed, short-lived access token. */
         String accessToken = jwtService.generateAccessToken(authenticatedUser);
 
         /*
@@ -234,9 +240,7 @@ public class AuthenticationService {
         }
 
         RefreshToken currentToken = tokenOptional.get();
-
         BankUser user = currentToken.getUser();
-
         Instant now = Instant.now();
 
         /*
@@ -274,6 +278,12 @@ public class AuthenticationService {
             throw new AuthenticationFailedException();
         }
 
+        if (user.isSuspended()) {
+            throw new InvalidRefreshTokenException(
+                    "The identity is not permitted to refresh its session."
+            );
+        }
+
         /*
          * An expired timed lock may be cleared.
          * An indefinite or active lock prevents refresh.
@@ -298,9 +308,7 @@ public class AuthenticationService {
             }
         }
 
-        /*
-         * Generate the replacement refresh token.
-         */
+        /* Generate the replacement refresh token.  */
         String replacementRawToken = generateRefreshToken();
         String replacementTokenHash = hashToken(replacementRawToken);
         Instant replacementExpiresAt = now.plus(refreshTokenTtl);

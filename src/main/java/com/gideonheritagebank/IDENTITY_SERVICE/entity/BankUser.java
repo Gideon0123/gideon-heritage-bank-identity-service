@@ -93,6 +93,15 @@ public class BankUser {
     )
     private String customerNumber;
 
+    @Column(name = "suspended", nullable = false)
+    private boolean suspended = false;
+
+    @Column(name = "suspension_reason", length = 1000)
+    private String suspensionReason;
+
+    @Column(name = "suspended_at")
+    private Instant suspendedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -186,6 +195,9 @@ public class BankUser {
         user.setAccountNonLocked(true);
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
+        user.setSuspended(false);
+        user.setSuspensionReason(null);
+        user.setSuspendedAt(null);
 
         return user;
     }
@@ -213,6 +225,9 @@ public class BankUser {
         user.setAccountNonLocked(true);
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
+        user.setSuspended(false);
+        user.setSuspensionReason(null);
+        user.setSuspendedAt(null);
 
         return user;
     }
@@ -241,7 +256,22 @@ public class BankUser {
 
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
+        user.setSuspended(false);
+        user.setSuspensionReason(null);
+        user.setSuspendedAt(null);
 
         return user;
+    }
+
+    public void suspend(String reason) {
+        this.suspended = true;
+        this.suspensionReason = reason;
+        this.suspendedAt = Instant.now();
+    }
+
+    public void unsuspend() {
+        this.suspended = false;
+        this.suspensionReason = null;
+        this.suspendedAt = null;
     }
 }

@@ -301,6 +301,32 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailNotVerified(
+            EmailNotVerifiedException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Email not verified: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRefreshToken(
+            InvalidRefreshTokenException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid refresh token: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiResponse<Void>> errorResponse(
             HttpStatus status,
             String message,
