@@ -294,8 +294,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return errorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "The identity service is not correctly configured",
+                HttpStatus.BAD_REQUEST,
+                "Role configuration error: " + exception.getMessage(),
                 Map.of(),
                 request
         );

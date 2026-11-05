@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.dto.response;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.CustomerIdentityStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ public record CustomerProfileResponse(
         String profilePhotoUrl,
         UserType userType,
         boolean enabled,
+        CustomerIdentityStatus identityStatus,
         boolean emailVerified,
         Instant createdAt,
         Instant updatedAt

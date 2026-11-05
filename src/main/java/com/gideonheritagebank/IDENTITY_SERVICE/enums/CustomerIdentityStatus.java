@@ -5,5 +5,7 @@ public enum CustomerIdentityStatus {
     PENDING_VERIFICATION,
     ACTIVE,
     DISABLED,
-    LOCKED
+    LOCKED,
+    SUSPENDED,
+    DELETED
 }
