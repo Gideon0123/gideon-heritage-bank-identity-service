@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.EmailAlreadyRegisteredException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidIdentityStateException;
@@ -36,6 +37,7 @@ public class IdentityService {
     private final IdentityMapper identityMapper;
     private final EmailVerificationService emailVerificationService;
     private final CustomerNumberGenerator customerNumberGenerator;
+    private final AuthenticationService authenticationService;
 
     @Transactional
     public IdentityResponse registerCustomer(RegisterRequest request) {
@@ -210,63 +212,168 @@ public class IdentityService {
     }
 
     @Transactional
-    public IdentityResponse enableIdentity(UUID userId) {
-        BankUser user = getIdentityForUpdate(userId);
-
-        user.setEnabled(true);
-
-        BankUser savedUser = bankUserRepository.saveAndFlush(user);
-
-        return identityMapper.toIdentityResponse(savedUser);
-    }
-
-    @Transactional
-    public IdentityResponse disableIdentity(UUID userId) {
-        BankUser user = getIdentityForUpdate(userId);
-
-        user.setEnabled(false);
-
-        BankUser savedUser = bankUserRepository.saveAndFlush(user);
-
-        return identityMapper.toIdentityResponse(savedUser);
-    }
-
-    @Transactional
-    public IdentityResponse lockIdentity(
-            UUID userId,
-            Instant lockedUntil
+    public IdentityResponse enableCustomer(
+            UUID customerId,
+            String reason
     ) {
-        if (lockedUntil != null && !lockedUntil.isAfter(Instant.now())) {
+        normalizeReason(reason);
+
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        if (customer.isEnabled()) {
             throw new InvalidIdentityStateException(
-                    "Lock expiry must be a future timestamp"
+                    "Customer identity is already enabled."
             );
         }
 
-        BankUser user = getIdentityForUpdate(userId);
-
-        user.setAccountNonLocked(false);
-        user.setLockedUntil(lockedUntil);
-
-        BankUser savedUser = bankUserRepository.saveAndFlush(user);
-
-        return identityMapper.toIdentityResponse(savedUser);
+        customer.setEnabled(true);
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+        return identityMapper.toIdentityResponse(savedCustomer);
     }
 
     @Transactional
-    public IdentityResponse unlockIdentity(UUID userId) {
-        BankUser user = getIdentityForUpdate(userId);
+    public IdentityResponse disableCustomer(
+            UUID customerId,
+            String reason
+    ) {
+        normalizeReason(reason);
 
-        user.setAccountNonLocked(true);
-        user.setLockedUntil(null);
-        user.setFailedLoginAttempts(0);
+        BankUser customer = getCustomerForUpdate(customerId);
 
-        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+        if (!customer.isEnabled()) {
+            throw new InvalidIdentityStateException(
+                    "Customer identity is already disabled."
+            );
+        }
 
-        return identityMapper.toIdentityResponse(savedUser);
+        customer.setEnabled(false);
+        authenticationService.revokeAllActiveRefreshTokens(customer);
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toIdentityResponse(savedCustomer);
     }
 
-    private BankUser getIdentityForUpdate(UUID userId) {
-        return bankUserRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new IdentityNotFoundException(userId));
+    @Transactional
+    public IdentityResponse lockCustomer(
+            UUID customerId,
+            Instant lockedUntil,
+            String reason
+    ) {
+        normalizeReason(reason);
+
+        if (lockedUntil != null && !lockedUntil.isAfter(Instant.now())) {
+            throw new InvalidIdentityStateException(
+                    "Lock expiry must be a future timestamp."
+            );
+        }
+
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        if (!customer.isAccountNonLocked()) {
+            throw new InvalidIdentityStateException(
+                    "Customer identity is already locked."
+            );
+        }
+
+        customer.setAccountNonLocked(false);
+        customer.setLockedUntil(lockedUntil);
+        authenticationService.revokeAllActiveRefreshTokens(customer);
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toIdentityResponse(savedCustomer);
+    }
+
+    @Transactional
+    public IdentityResponse unlockCustomer(
+            UUID customerId,
+            String reason
+    ) {
+        normalizeReason(reason);
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        if (customer.isAccountNonLocked()) {
+            throw new InvalidIdentityStateException(
+                    "Customer identity is not locked."
+            );
+        }
+
+        customer.setAccountNonLocked(true);
+        customer.setLockedUntil(null);
+        customer.setFailedLoginAttempts(0);
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toIdentityResponse(savedCustomer);
+    }
+
+    @Transactional
+    public IdentityResponse suspendCustomer(
+            UUID customerId,
+            String reason
+    ) {
+        String normalizedReason = normalizeReason(reason);
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        if (customer.isSuspended()) {
+            throw new InvalidIdentityStateException(
+                    "Customer identity is already suspended."
+            );
+        }
+
+        customer.suspend(normalizedReason);
+        authenticationService.revokeAllActiveRefreshTokens(customer);
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toIdentityResponse(savedCustomer);
+    }
+
+    @Transactional
+    public IdentityResponse unsuspendCustomer(
+            UUID customerId,
+            String reason
+    ) {
+        normalizeReason(reason);
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        if (!customer.isSuspended()) {
+            throw new InvalidIdentityStateException(
+                    "Customer identity is not suspended."
+            );
+        }
+
+        customer.unsuspend();
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toIdentityResponse(savedCustomer);
+    }
+
+    private BankUser getCustomerForUpdate(UUID customerId) {
+
+        BankUser customer = bankUserRepository.findByIdForUpdate(customerId)
+                .orElseThrow(() -> new IdentityNotFoundException(customerId));
+
+        if (customer.getUserType() != UserType.CUSTOMER) {
+            throw new IdentityNotFoundException(customerId);
+        }
+
+        return customer;
+    }
+
+    private String normalizeReason(String reason) {
+
+        if (reason == null || reason.isBlank()) {
+            throw new InvalidIdentityStateException(
+                    "A reason must be provided for this identity operation."
+            );
+        }
+
+        String normalized = reason.trim();
+
+        if (normalized.length() < 5 || normalized.length() > 1000) {
+            throw new InvalidIdentityStateException(
+                    "Reason must contain between 5 and 1000 characters."
+            );
+        }
+
+        return normalized;
     }
 }

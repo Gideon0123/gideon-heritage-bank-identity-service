@@ -1,12 +1,12 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.AdminUpdateCustomerRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerFilterRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CustomerSearchRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSearchSpecification;
@@ -71,7 +71,6 @@ public class AdminCustomerService {
             CustomerSearchRequest request,
             Pageable pageable
     ) {
-//        validatePageSize(pageable);
         Pageable validatedPageable = validateAndBuildPageable(pageable);
 
         Page<BankUser> customers = bankUserRepository.findAll(
@@ -80,6 +79,60 @@ public class AdminCustomerService {
         );
 
         return customers.map(identityMapper::toCustomerProfileResponse);
+    }
+
+    @Transactional
+    public CustomerProfileResponse updateCustomerByStaff(
+            UUID customerId,
+            AdminUpdateCustomerRequest request
+    ) {
+        normalizeReason(request.reason());
+
+        BankUser customer = getCustomerForUpdate(customerId);
+
+        String firstName = normalizeName(request.firstName());
+        String lastName = normalizeName(request.lastName());
+        String phoneNumber = normalizePhoneNumber(request.phoneNumber());
+
+        if (firstName.isBlank()) {
+            throw new InvalidIdentityStateException(
+                    "First name is required."
+            );
+        }
+
+        if (lastName.isBlank()) {
+            throw new InvalidIdentityStateException(
+                    "Last name is required."
+            );
+        }
+
+        if (phoneNumber.isBlank()) {
+            throw new InvalidIdentityStateException(
+                    "Phone number is required."
+            );
+        }
+
+        if (bankUserRepository.existsByPhoneNumberAndIdNot(
+                phoneNumber,
+                customerId
+        )) {
+            throw new PhoneNumberAlreadyRegisteredException();
+        }
+
+        customer.setFirstName(firstName);
+        customer.setLastName(lastName);
+        customer.setPhoneNumber(phoneNumber);
+
+        String photoUrl = request.profilePhotoUrl();
+
+        customer.setProfilePhotoUrl(
+                photoUrl == null || photoUrl.isBlank()
+                        ? null : photoUrl.trim()
+        );
+
+        BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
+
+        return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
 
     private Pageable validateAndBuildPageable(Pageable pageable) {
@@ -124,5 +177,43 @@ public class AdminCustomerService {
                     "createdFrom cannot be later than createdTo"
             );
         }
+    }
+
+    private BankUser getCustomerForUpdate(UUID customerId) {
+
+        BankUser customer = bankUserRepository.findByIdForUpdate(customerId)
+                .orElseThrow(() -> new IdentityNotFoundException(customerId));
+
+        if (customer.getUserType() != UserType.CUSTOMER) {
+            throw new IdentityNotFoundException(customerId);
+        }
+
+        return customer;
+    }
+
+    private void normalizeReason(String reason) {
+
+        if (reason == null || reason.isBlank()) {
+            throw new InvalidIdentityStateException(
+                    "A reason must be provided for this identity operation."
+            );
+        }
+
+        String normalized = reason.trim();
+
+        if (normalized.length() < 5 || normalized.length() > 1000) {
+            throw new InvalidIdentityStateException(
+                    "Reason must contain between 5 and 1000 characters."
+            );
+        }
+
+    }
+
+    private String normalizeName(String value) {
+        return value.trim();
+    }
+
+    private String normalizePhoneNumber(String value) {
+        return value.trim();
     }
 }

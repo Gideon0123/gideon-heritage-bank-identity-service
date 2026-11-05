@@ -398,7 +398,11 @@ public class AuthenticationService {
      * ============================================================
      */
 
-    private void revokeAllActiveRefreshTokens(BankUser user) {
+    //This method was also used in the IdentityService to revoke all active refresh tokens for
+    // a user when their account is disabled, suspended, locked, or deleted.
+    // It is now centralized here in the AuthenticationService.
+    @Transactional
+    public void revokeAllActiveRefreshTokens(BankUser user) {
 
         List<RefreshToken> tokens = refreshTokenRepository.findAllByUser_Id(
                 user.getId()
