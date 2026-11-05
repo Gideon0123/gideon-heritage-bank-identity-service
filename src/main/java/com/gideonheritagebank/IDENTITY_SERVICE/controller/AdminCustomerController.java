@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.AdminCustomerService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,15 +42,12 @@ public class AdminCustomerController {
     // ==========================================
 
     @GetMapping
-    public ApiResponse<PagedResponse<CustomerProfileResponse>> getCustomers(
+    public ResponseEntity<ApiResponse<PagedResponse<CustomerProfileResponse>>> getCustomers(
 
             @ModelAttribute CustomerFilterRequest filter,
 
             @PageableDefault(
-                    page = 1,
-                    size = 20,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
+                    page = 1, size = 20, sort = "createdAt", direction = Sort.Direction.DESC
             )
             Pageable pageable,
 
@@ -60,14 +58,15 @@ public class AdminCustomerController {
                 adminCustomerService.getCustomers(filter, pageable);
 
         PagedResponse<CustomerProfileResponse> pagedResponse = PagedResponse.from(customers);
-
-        return success(
+        ApiResponse<PagedResponse<CustomerProfileResponse>> response = ApiResponse.success(
                 "Customers retrieved successfully",
-                HttpStatus.OK,
+                HttpStatus.OK.value(),
                 pagedResponse,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     // ==========================================
@@ -75,21 +74,22 @@ public class AdminCustomerController {
     // ==========================================
 
     @GetMapping("/{customerId}")
-    public ApiResponse<CustomerProfileResponse> getCustomerById(
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> getCustomerById(
 
             @PathVariable UUID customerId,
             HttpServletRequest httpRequest,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId
     ) {
         CustomerProfileResponse customer = adminCustomerService.getCustomerById(customerId);
-
-        return success(
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
                 "Customer retrieved successfully",
-                HttpStatus.OK,
+                HttpStatus.OK.value(),
                 customer,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
@@ -105,7 +105,6 @@ public class AdminCustomerController {
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest httpRequest
     ) {
-
         Page<CustomerProfileResponse> result =
                 adminCustomerService.searchCustomers(request, pageable);
 
@@ -117,37 +116,11 @@ public class AdminCustomerController {
                         "Customers retrieved successfully.",
                         HttpStatus.OK.value(),
                         pagedResponse,
-                        requestId
+                        httpRequest.getRequestURI(),
+                        requestId != null ? requestId : TraceIdUtil.generate()
                 );
-
-        response.setPath(httpRequest.getRequestURI());
 
         return ResponseEntity.ok(response);
     }
 
-    // ==========================================
-    // COMMON RESPONSE HELPER
-    // ==========================================
-
-    private <T> ApiResponse<T> success(
-            String message,
-            HttpStatus status,
-            T data,
-            HttpServletRequest httpRequest,
-            String requestId
-    ) {
-        String traceId = (requestId == null || requestId.isBlank())
-                ? UUID.randomUUID().toString() : requestId;
-
-        ApiResponse<T> response = ApiResponse.success(
-                message,
-                status.value(),
-                data,
-                traceId
-        );
-
-        response.setPath(httpRequest.getRequestURI());
-
-        return response;
-    }
 }

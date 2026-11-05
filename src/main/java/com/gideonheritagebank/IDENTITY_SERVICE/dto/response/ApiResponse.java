@@ -28,6 +28,7 @@ public class ApiResponse<T> {
             String message,
             int status,
             T data,
+            String path,
             String traceId
     ) {
         return ApiResponse.<T>builder()
@@ -36,6 +37,7 @@ public class ApiResponse<T> {
                 .status(status)
                 .message(message)
                 .data(data)
+                .path(path)
                 .traceId(traceId)
                 .build();
     }

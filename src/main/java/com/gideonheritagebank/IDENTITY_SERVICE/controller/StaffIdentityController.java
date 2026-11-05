@@ -10,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -31,6 +28,7 @@ public class StaffIdentityController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<IdentityResponse>> createStaff(
             @Valid @RequestBody StaffIdentityCreationRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
 
@@ -40,19 +38,14 @@ public class StaffIdentityController {
                 "Staff identity created. The account remains disabled until the staff onboarding and credential-setup process is completed.",
                 HttpStatus.CREATED.value(),
                 identity,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : UUID.randomUUID().toString()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
     }
 
-    private String traceId(HttpServletRequest request) {
-        String traceId = request.getHeader("X-Request-Id");
 
-        return traceId == null || traceId.isBlank()
-                ? UUID.randomUUID().toString()
-                : traceId;
-    }
 }
 

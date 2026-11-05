@@ -8,10 +8,12 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressRespo
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerAddressService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerProfileService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +34,7 @@ public class CustomerController {
     // =========================
 
     @GetMapping("/me")
-    public ApiResponse<CustomerProfileResponse> getMyProfile(
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> getMyProfile(
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest httpRequest,
             @RequestHeader(value = "X-Request-Id", required = false)
@@ -41,18 +43,19 @@ public class CustomerController {
         UUID customerId = getAuthenticatedUserId(jwt);
 
         CustomerProfileResponse profile = customerProfileService.getMyProfile(customerId);
-
-        return success(
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
                 "Customer profile retrieved successfully",
-                HttpStatus.OK,
+                HttpStatus.OK.value(),
                 profile,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/me")
-    public ApiResponse<CustomerProfileResponse> updateMyProfile(
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMyProfile(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UpdateCustomerProfileRequest request,
             HttpServletRequest httpRequest,
@@ -64,13 +67,15 @@ public class CustomerController {
         CustomerProfileResponse profile =
                 customerProfileService.updateMyProfile(customerId, request);
 
-        return success(
-                "Customer profile updated successfully",
-                HttpStatus.OK,
+        ApiResponse<CustomerProfileResponse> response = ApiResponse.success(
+                "Customer profile Updated successfully",
+                HttpStatus.OK.value(),
                 profile,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     // =========================
@@ -78,7 +83,7 @@ public class CustomerController {
     // =========================
 
     @GetMapping("/me/addresses")
-    public ApiResponse<List<CustomerAddressResponse>> getMyAddresses(
+    public ResponseEntity<ApiResponse<List<CustomerAddressResponse>>> getMyAddresses(
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest httpRequest,
             @RequestHeader(value = "X-Request-Id", required = false)
@@ -89,17 +94,19 @@ public class CustomerController {
         List<CustomerAddressResponse> addresses =
                 customerAddressService.getMyAddresses(customerId);
 
-        return success(
+        ApiResponse<List<CustomerAddressResponse>> response = ApiResponse.success(
                 "Customer addresses retrieved successfully",
-                HttpStatus.OK,
+                HttpStatus.OK.value(),
                 addresses,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/me/addresses")
-    public ApiResponse<CustomerAddressResponse> addAddress(
+    public ResponseEntity<ApiResponse<CustomerAddressResponse>> addAddress(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateCustomerAddressRequest request,
             HttpServletRequest httpRequest,
@@ -111,17 +118,19 @@ public class CustomerController {
         CustomerAddressResponse address =
                 customerAddressService.addAddress(customerId, request);
 
-        return success(
+        ApiResponse<CustomerAddressResponse> response = ApiResponse.success(
                 "Customer address added successfully",
-                HttpStatus.CREATED,
+                HttpStatus.CREATED.value(),
                 address,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/me/addresses/{addressId}")
-    public ApiResponse<CustomerAddressResponse> updateAddress(
+    public ResponseEntity<ApiResponse<CustomerAddressResponse>> updateAddress(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
             @Valid @RequestBody UpdateCustomerAddressRequest request,
@@ -137,17 +146,19 @@ public class CustomerController {
                 request
         );
 
-        return success(
+        ApiResponse<CustomerAddressResponse> response = ApiResponse.success(
                 "Customer address updated successfully",
-                HttpStatus.OK,
+                HttpStatus.CREATED.value(),
                 address,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/me/addresses/{addressId}")
-    public ApiResponse<Void> deleteAddress(
+    public ResponseEntity<ApiResponse<Void>> deleteAddress(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
             HttpServletRequest httpRequest,
@@ -158,17 +169,19 @@ public class CustomerController {
 
         customerAddressService.deleteAddress(customerId, addressId);
 
-        return success(
+        ApiResponse<Void> response = ApiResponse.success(
                 "Customer address deleted successfully",
-                HttpStatus.OK,
+                HttpStatus.NO_CONTENT.value(),
                 null,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/me/addresses/{addressId}/primary")
-    public ApiResponse<CustomerAddressResponse> makePrimary(
+    public ResponseEntity<ApiResponse<CustomerAddressResponse>> makePrimary(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
             HttpServletRequest httpRequest,
@@ -180,13 +193,15 @@ public class CustomerController {
         CustomerAddressResponse address =
                 customerAddressService.makePrimary(customerId, addressId);
 
-        return success(
-                "Primary address updated successfully",
-                HttpStatus.OK,
+        ApiResponse<CustomerAddressResponse> response = ApiResponse.success(
+                "Primary Address Updated successfully",
+                HttpStatus.CREATED.value(),
                 address,
-                httpRequest,
-                requestId
+                httpRequest.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+
+        return ResponseEntity.ok(response);
     }
 
     // =========================
@@ -204,25 +219,4 @@ public class CustomerController {
         return UUID.fromString(jwt.getSubject());
     }
 
-    private <T> ApiResponse<T> success(
-            String message,
-            HttpStatus status,
-            T data,
-            HttpServletRequest httpRequest,
-            String requestId
-    ) {
-        String traceId = (requestId == null || requestId.isBlank())
-                ? UUID.randomUUID().toString() : requestId;
-
-        ApiResponse<T> response = ApiResponse.success(
-                message,
-                status.value(),
-                data,
-                traceId
-        );
-
-        response.setPath(httpRequest.getRequestURI());
-
-        return response;
-    }
 }

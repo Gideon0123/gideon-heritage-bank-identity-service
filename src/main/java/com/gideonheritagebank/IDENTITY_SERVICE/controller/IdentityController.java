@@ -7,16 +7,14 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.EmailVerificationService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.IdentityService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -31,6 +29,7 @@ public class IdentityController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<IdentityResponse>> registerCustomer(
             @Valid @RequestBody RegisterRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
         IdentityResponse identity = identityService.registerCustomer(requestBody);
@@ -41,7 +40,8 @@ public class IdentityController {
                         "verification email if necessary.",
                 HttpStatus.CREATED.value(),
                 identity,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -51,6 +51,7 @@ public class IdentityController {
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
         emailVerificationService.verifyEmail(requestBody.token());
@@ -59,7 +60,8 @@ public class IdentityController {
                 "Email verified successfully. You can now log in if your account is enabled.",
                 HttpStatus.OK.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(response);
@@ -68,6 +70,7 @@ public class IdentityController {
     @PostMapping("/resend-verification")
     public ResponseEntity<ApiResponse<Void>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
         emailVerificationService.resendVerification(
@@ -83,16 +86,11 @@ public class IdentityController {
                         "a new verification email will be requested.",
                 HttpStatus.ACCEPTED.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.accepted().cacheControl(CacheControl.noStore()).body(response);
     }
 
-    private String traceId(HttpServletRequest request) {
-        String traceId = request.getHeader("X-Request-Id");
-
-        return traceId == null || traceId.isBlank()
-                ? UUID.randomUUID().toString() : traceId;
-    }
 }

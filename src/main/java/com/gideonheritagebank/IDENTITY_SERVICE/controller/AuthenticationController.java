@@ -10,6 +10,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.service.AuthenticationService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordResetService;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ChangePasswordRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordChangeService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,12 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -64,6 +60,8 @@ public class AuthenticationController {
     @GetMapping("/csrf")
     public ResponseEntity<ApiResponse<Map<String, String>>> csrf(
             CsrfToken csrfToken,
+            @RequestHeader(value = "X-Request-Id", required = false)
+            String requestId,
             HttpServletRequest request
     ) {
         Map<String, String> data = Map.of(
@@ -76,8 +74,10 @@ public class AuthenticationController {
                 "CSRF token generated",
                 HttpStatus.OK.value(),
                 data,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
+        response.setPath(request.getRequestURI());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -92,6 +92,8 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<IdentityResponse>> login(
             @Valid @RequestBody LoginRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false)
+            String requestId,
             HttpServletRequest request
     ) {
         AuthenticationResult result = authenticationService.login(requestBody);
@@ -114,7 +116,8 @@ public class AuthenticationController {
                 "Login successful",
                 HttpStatus.OK.value(),
                 result.identity(),
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.ok()
@@ -136,6 +139,8 @@ public class AuthenticationController {
                     name = "${identity.security.cookies.refresh-name:REFRESH_TOKEN}",
                     required = false
             ) String refreshToken,
+            @RequestHeader(value = "X-Request-Id", required = false)
+            String requestId,
             HttpServletRequest request
     ) {
         AuthenticationResult result = authenticationService.refresh(refreshToken);
@@ -158,7 +163,8 @@ public class AuthenticationController {
                 "Token refreshed successfully",
                 200,
                 result.identity(),
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.ok()
@@ -180,6 +186,8 @@ public class AuthenticationController {
                     name = "${identity.security.cookies.refresh-name:REFRESH_TOKEN}",
                     required = false
             ) String refreshToken,
+            @RequestHeader(value = "X-Request-Id", required = false)
+            String requestId,
             HttpServletRequest request
     ) {
         authenticationService.logout(refreshToken);
@@ -198,7 +206,8 @@ public class AuthenticationController {
                 "Logged out successfully",
                 HttpStatus.OK.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.ok()
@@ -216,6 +225,7 @@ public class AuthenticationController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @Valid @RequestBody ForgotPasswordRequest requestBody,
             HttpServletRequest request
     ) {
@@ -233,7 +243,8 @@ public class AuthenticationController {
                         + "password reset instructions will be sent.",
                 HttpStatus.ACCEPTED.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.accepted()
@@ -245,6 +256,7 @@ public class AuthenticationController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest requestBody,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
         passwordResetService.resetPassword(
@@ -258,7 +270,8 @@ public class AuthenticationController {
                         + "using your new password.",
                 HttpStatus.OK.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         return ResponseEntity.ok()
@@ -277,7 +290,8 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ChangePasswordRequest requestBody,
-            HttpServletRequest request
+            HttpServletRequest request,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId
     ) {
 
         /*
@@ -299,7 +313,8 @@ public class AuthenticationController {
                         + "with your new password.",
                 HttpStatus.OK.value(),
                 null,
-                traceId(request)
+                request.getRequestURI(),
+                requestId != null ? requestId : TraceIdUtil.generate()
         );
 
         ResponseCookie expiredAccessCookie = expireCookie(
@@ -365,11 +380,4 @@ public class AuthenticationController {
                 .build();
     }
 
-    private String traceId(HttpServletRequest request) {
-
-        String traceId = request.getHeader("X-Request-Id");
-
-        return traceId == null || traceId.isBlank()
-                ? UUID.randomUUID().toString() : traceId;
-    }
 }
