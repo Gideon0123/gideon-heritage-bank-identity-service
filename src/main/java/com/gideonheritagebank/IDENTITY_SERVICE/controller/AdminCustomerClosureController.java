@@ -152,8 +152,7 @@ public class AdminCustomerClosureController {
 
     @PostMapping("/{requestId}/financial-clearance")
     @PreAuthorize("hasAnyRole('ADMIN', 'RISK_OFFICER')")
-    public ResponseEntity<ApiResponse<CustomerClosureResponse>>
-    confirmFinancialClearance(
+    public ResponseEntity<ApiResponse<CustomerClosureResponse>> confirmFinancialClearance(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ClosureFinancialClearanceRequest requestBody,
@@ -191,7 +190,6 @@ public class AdminCustomerClosureController {
             @Valid @RequestBody RejectCustomerClosureRequest requestBody,
             HttpServletRequest request
     ) {
-
         UUID staffId = getAuthenticatedUserId(jwt);
 
         CustomerClosureResponse closure =
@@ -222,7 +220,6 @@ public class AdminCustomerClosureController {
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest request
     ) {
-
         UUID staffId = getAuthenticatedUserId(jwt);
 
         CustomerClosureResponse closure =

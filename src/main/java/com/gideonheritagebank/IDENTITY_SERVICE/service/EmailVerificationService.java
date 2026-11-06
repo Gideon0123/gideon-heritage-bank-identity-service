@@ -136,7 +136,8 @@ public class EmailVerificationService {
 
         if (user == null || user.getUserType() == null
                 || !user.getUserType().name().equals("CUSTOMER")
-                || user.isEmailVerified()) {
+                || user.isIdentityClosed() || user.isEmailVerified()) {
+
             return;
         }
 

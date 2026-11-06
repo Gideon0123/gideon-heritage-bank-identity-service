@@ -399,12 +399,9 @@ public class CustomerClosureService {
                         "Staff identity was not found."
                 ));
 
-        if (staff.getUserType() != UserType.STAFF
-                || !staff.isEnabled()
-                || !staff.isEmailVerified()
-                || !staff.isAccountNonLocked()
-                || staff.isSuspended()
-                || staff.isIdentityClosed()) {
+        if (staff.getUserType() != UserType.STAFF || !staff.isEnabled()
+                || !staff.isEmailVerified() || !staff.isAccountNonLocked()
+                || staff.isSuspended() || staff.isIdentityClosed()) {
 
             throw new BusinessException("The acting identity is not an active staff identity.");
         }

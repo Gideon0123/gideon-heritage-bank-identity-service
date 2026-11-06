@@ -201,7 +201,6 @@ public class PasswordResetService {
          * Do not permit a reset for an identity that has been disabled
          * since the token was issued.
          */
-
         if (user.isIdentityClosed() || !user.isEnabled()) {
             throw new BadRequest("Password reset is not available for this account");
         }
