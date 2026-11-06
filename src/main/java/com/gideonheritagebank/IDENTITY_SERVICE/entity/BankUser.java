@@ -1,6 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -110,6 +111,9 @@ public class BankUser {
 
     @Column(name = "closure_reason", length = 1000)
     private String closureReason;
+
+    @Column(name = "retention_review_at")
+    private Instant retentionReviewAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -258,10 +262,13 @@ public class BankUser {
         this.suspendedAt = null;
     }
 
-    public void closeIdentity(String reason) {
+    public void closeIdentity(
+            String reason,
+            Instant retentionReviewAt
+    ) {
 
         if (this.identityClosed) {
-            throw new com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException(
+            throw new IllegalStateException(
                     "Customer identity is already closed."
             );
         }
@@ -270,5 +277,6 @@ public class BankUser {
         this.enabled = false;
         this.closedAt = Instant.now();
         this.closureReason = reason;
+        this.retentionReviewAt = retentionReviewAt;
     }
 }

@@ -18,12 +18,14 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.CustomerClosureRequest
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.EmailVerificationTokenRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.PasswordResetTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +33,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CustomerClosureService {
+
+    @Value("${identity.retention.closed-customer-review-period:P7Y}")
+    private Duration closedCustomerReviewPeriod;
 
     private static final List<CustomerClosureStatus> OPEN_STATUSES = List.of(
             CustomerClosureStatus.REQUESTED,
@@ -299,7 +304,19 @@ public class CustomerClosureService {
         Instant now = Instant.now();
 
         /* Close the identity. Do not delete the BankUser. */
-        customer.closeIdentity(closureRequest.getCustomerReason());
+        if (closedCustomerReviewPeriod == null
+                || closedCustomerReviewPeriod.isNegative()
+                || closedCustomerReviewPeriod.isZero()) {
+
+            throw new BusinessException(
+                    "The closed-customer retention review period is not configured correctly."
+            );
+        }
+
+        customer.closeIdentity(
+                closureRequest.getCustomerReason(),
+                now.plus(closedCustomerReviewPeriod)
+        );
 
         /* Revoke every active refresh-token session. */
         authenticationService.revokeAllActiveRefreshTokens(customer);

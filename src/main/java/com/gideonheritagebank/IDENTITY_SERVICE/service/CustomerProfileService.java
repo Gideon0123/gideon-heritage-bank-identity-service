@@ -71,7 +71,7 @@ public class CustomerProfileService {
                         "Customer identity was not found"
                 ));
 
-        validateCustomerType(customer);
+        validateCustomer(customer);
 
         return customer;
     }
@@ -83,16 +83,22 @@ public class CustomerProfileService {
                         "Customer identity was not found"
                 ));
 
-        validateCustomerType(customer);
+        validateCustomer(customer);
 
         return customer;
     }
 
-    private void validateCustomerType(BankUser user) {
+    private void validateCustomer(BankUser user) {
 
         if (user.getUserType() != UserType.CUSTOMER) {
+            throw new ResourceNotFoundException(
+                    "Customer identity was not found"
+            );
+        }
+
+        if (user.isIdentityClosed()) {
             throw new BusinessException(
-                    "This operation is only available to customer identities"
+                    "This customer identity has been closed."
             );
         }
     }

@@ -91,6 +91,10 @@ public class AuthenticationService {
                 user.getPasswordHash()
         );
 
+        if (user.isIdentityClosed()) {
+            throw new AuthenticationFailedException();
+        }
+
         Instant now = Instant.now();
 
         /* Check whether the account is locked.
@@ -228,6 +232,12 @@ public class AuthenticationService {
         BankUser user = currentToken.getUser();
         Instant now = Instant.now();
 
+        if (user.isIdentityClosed()) {
+            revokeAllActiveRefreshTokens(user);
+            refreshTokenRepository.flush();
+            throw new AuthenticationFailedException();
+        }
+
         /*
          * A revoked token must never be accepted again.
          *
@@ -253,9 +263,7 @@ public class AuthenticationService {
             throw new AuthenticationFailedException();
         }
 
-        /*
-         * Check current account state before issuing a replacement.
-         */
+        /* Check current account state before issuing a replacement. */
         if (!user.isEnabled() || !user.isEmailVerified()) {
 
             revokeAllActiveRefreshTokens(user);

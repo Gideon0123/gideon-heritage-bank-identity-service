@@ -93,11 +93,12 @@ public class EmailVerificationService {
 
         BankUser user = token.getUser();
 
-        if (user.getUserType() == null
-                || !user.getUserType().name().equals("CUSTOMER")) {
-            throw new BadRequest(
-                    "This token cannot verify the account"
-            );
+        if (user.isIdentityClosed()) {
+            throw new BadRequest("This identity is no longer eligible for email verification.");
+        }
+
+        if (user.getUserType() == null || !user.getUserType().name().equals("CUSTOMER")) {
+            throw new BadRequest("This token cannot verify the account");
         }
 
         if (!user.isEmailVerified()) {

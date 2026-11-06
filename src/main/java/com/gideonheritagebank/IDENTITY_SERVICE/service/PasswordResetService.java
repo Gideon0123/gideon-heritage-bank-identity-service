@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.ConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.VerificationTokenExpired;
 
 import java.nio.charset.StandardCharsets;
@@ -84,7 +83,7 @@ public class PasswordResetService {
          * may still request a password reset.
          */
 
-        if (!user.isEnabled() || !user.isEmailVerified()) {
+        if (user.isIdentityClosed() || !user.isEnabled() || !user.isEmailVerified()) {
             return;
         }
 
@@ -221,7 +220,7 @@ public class PasswordResetService {
          * since the token was issued.
          */
 
-        if (!user.isEnabled()) {
+        if (user.isIdentityClosed() || !user.isEnabled()) {
             throw new BadRequest("Password reset is not available for this account");
         }
 
