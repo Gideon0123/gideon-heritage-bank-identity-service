@@ -40,6 +40,16 @@ public final class CustomerSpecification {
                 );
             }
 
+//            if (filter.getIdentityClosed() != null) {
+//
+//                predicates.add(
+//                        criteriaBuilder.equal(
+//                                root.get("identityClosed"),
+//                                filter.getIdentityClosed()
+//                        )
+//                );
+//            }
+
             if (filter.getEmailVerified() != null) {
 
                 predicates.add(

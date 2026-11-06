@@ -92,7 +92,7 @@ public class AdminCustomerService {
         BankUser customer = getCustomerForUpdate(customerId);
         String firstName = normalizeName(request.firstName());
         String lastName = normalizeName(request.lastName());
-        String phoneNumber = getPhoneNumber(request, firstName, lastName);
+        String phoneNumber = getPhoneNumber(customerId, request, firstName, lastName);
 
         if (bankUserRepository.existsByPhoneNumberAndIdNot(
                 phoneNumber,
@@ -108,8 +108,7 @@ public class AdminCustomerService {
         String photoUrl = request.profilePhotoUrl();
 
         customer.setProfilePhotoUrl(
-                photoUrl == null || photoUrl.isBlank()
-                        ? null : photoUrl.trim()
+                photoUrl == null || photoUrl.isBlank() ? null : photoUrl.trim()
         );
 
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
@@ -118,18 +117,23 @@ public class AdminCustomerService {
     }
 
     private @NonNull String getPhoneNumber(
+            UUID customerId,
             AdminUpdateCustomerRequest request,
             String firstName,
             String lastName
     ) {
+        BankUser customer = getCustomerForUpdate(customerId);
+
         String phoneNumber = normalizePhoneNumber(request.phoneNumber());
 
         if (firstName.isBlank()) {
             throw new InvalidIdentityStateException("First name is required.");
+//            return customer.getFirstName();
         }
 
         if (lastName.isBlank()) {
             throw new InvalidIdentityStateException("Last name is required.");
+//            return customer.getLastName();
         }
 
         if (phoneNumber.isBlank()) {

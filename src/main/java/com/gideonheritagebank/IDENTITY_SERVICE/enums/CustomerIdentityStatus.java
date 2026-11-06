@@ -6,5 +6,6 @@ public enum CustomerIdentityStatus {
     ACTIVE,
     DISABLED,
     LOCKED,
-    SUSPENDED
+    SUSPENDED,
+    CLOSED
 }

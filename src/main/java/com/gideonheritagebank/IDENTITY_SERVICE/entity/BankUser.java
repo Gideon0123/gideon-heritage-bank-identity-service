@@ -102,6 +102,15 @@ public class BankUser {
     @Column(name = "suspended_at")
     private Instant suspendedAt;
 
+    @Column(name = "identity_closed", nullable = false)
+    private boolean identityClosed = false;
+
+    @Column(name = "closed_at")
+    private Instant closedAt;
+
+    @Column(name = "closure_reason", length = 1000)
+    private String closureReason;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -181,32 +190,6 @@ public class BankUser {
             String lastName,
             String email,
             String phoneNumber,
-            String passwordHash
-    ) {
-        BankUser user = new BankUser();
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setEmail(email);
-        user.setPhoneNumber(phoneNumber);
-        user.setPasswordHash(passwordHash);
-        user.setUserType(UserType.CUSTOMER);
-        user.setEnabled(true);
-        user.setEmailVerified(false);
-        user.setAccountNonLocked(true);
-        user.setFailedLoginAttempts(0);
-        user.setLockedUntil(null);
-        user.setSuspended(false);
-        user.setSuspensionReason(null);
-        user.setSuspendedAt(null);
-
-        return user;
-    }
-
-    public static BankUser createCustomer(
-            String firstName,
-            String lastName,
-            String email,
-            String phoneNumber,
             String passwordHash,
             String customerNumber
     ) {
@@ -273,5 +256,19 @@ public class BankUser {
         this.suspended = false;
         this.suspensionReason = null;
         this.suspendedAt = null;
+    }
+
+    public void closeIdentity(String reason) {
+
+        if (this.identityClosed) {
+            throw new com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException(
+                    "Customer identity is already closed."
+            );
+        }
+
+        this.identityClosed = true;
+        this.enabled = false;
+        this.closedAt = Instant.now();
+        this.closureReason = reason;
     }
 }

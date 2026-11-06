@@ -99,118 +99,7 @@ public class IdentityService {
         return identityMapper.toIdentityResponse(savedUser);
     }
 
-    private void validatePasswordConfirmation(RegisterRequest request) {
 
-        if (request.getPassword() == null || request.getConfirmPassword() == null
-                || !request.getPassword().equals(request.getConfirmPassword())) {
-
-            throw new InvalidRegistrationException(
-                    "Password and confirmation password must match"
-            );
-        }
-    }
-
-    private void validateRegistrationFields(
-            String firstName,
-            String lastName,
-            String email,
-            String phoneNumber
-    ) {
-        if (firstName.isBlank()) {
-            throw new InvalidRegistrationException(
-                    "First name is required"
-            );
-        }
-
-        if (lastName.isBlank()) {
-            throw new InvalidRegistrationException(
-                    "Last name is required"
-            );
-        }
-
-        if (email.isBlank()) {
-            throw new InvalidRegistrationException(
-                    "Email address is required"
-            );
-        }
-
-        if (phoneNumber.isBlank()) {
-            throw new InvalidRegistrationException(
-                    "Phone number is required"
-            );
-        }
-    }
-
-    private void validateEmailUniqueness(String email) {
-        if (bankUserRepository.existsByEmail(email)) {
-            throw new EmailAlreadyRegisteredException();
-        }
-    }
-
-    private void validatePhoneNumberUniqueness(String phoneNumber) {
-        if (bankUserRepository.existsByPhoneNumber(phoneNumber)) {
-            throw new PhoneNumberAlreadyRegisteredException();
-        }
-    }
-
-    private String normalizeName(String value) {
-        if (value == null) {
-            return "";
-        }
-
-        return value.trim().replaceAll("\\s+", " ");
-    }
-
-    private String normalizeEmail(String email) {
-        if (email == null) {
-            return "";
-        }
-
-        return email.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String normalizePhoneNumber(String phoneNumber) {
-        if (phoneNumber == null) {
-            return "";
-        }
-
-        return phoneNumber.trim();
-    }
-
-    private RuntimeException translateRegistrationConflict(
-            DataIntegrityViolationException exception
-    ) {
-        String constraintName = findConstraintName(exception);
-
-        if (constraintName != null) {
-            String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
-
-            if (normalizedConstraint.contains("email")) {
-                return new EmailAlreadyRegisteredException();
-            }
-
-            if (normalizedConstraint.contains("phone_number")
-                    || normalizedConstraint.contains("phone")) {
-                return new PhoneNumberAlreadyRegisteredException();
-            }
-        }
-
-        return exception;
-    }
-
-    private String findConstraintName(Throwable exception) {
-        Throwable current = exception;
-
-        while (current != null) {
-            if (current instanceof ConstraintViolationException violation) {
-                return violation.getConstraintName();
-            }
-
-            current = current.getCause();
-        }
-
-        return null;
-    }
 
     @Transactional
     public CustomerProfileResponse enableCustomer(
@@ -345,6 +234,119 @@ public class IdentityService {
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
+    }
+
+    private void validatePasswordConfirmation(RegisterRequest request) {
+
+        if (request.getPassword() == null || request.getConfirmPassword() == null
+                || !request.getPassword().equals(request.getConfirmPassword())) {
+
+            throw new InvalidRegistrationException(
+                    "Password and confirmation password must match"
+            );
+        }
+    }
+
+    private void validateRegistrationFields(
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber
+    ) {
+        if (firstName.isBlank()) {
+            throw new InvalidRegistrationException(
+                    "First name is required"
+            );
+        }
+
+        if (lastName.isBlank()) {
+            throw new InvalidRegistrationException(
+                    "Last name is required"
+            );
+        }
+
+        if (email.isBlank()) {
+            throw new InvalidRegistrationException(
+                    "Email address is required"
+            );
+        }
+
+        if (phoneNumber.isBlank()) {
+            throw new InvalidRegistrationException(
+                    "Phone number is required"
+            );
+        }
+    }
+
+    private void validateEmailUniqueness(String email) {
+        if (bankUserRepository.existsByEmail(email)) {
+            throw new EmailAlreadyRegisteredException();
+        }
+    }
+
+    private void validatePhoneNumberUniqueness(String phoneNumber) {
+        if (bankUserRepository.existsByPhoneNumber(phoneNumber)) {
+            throw new PhoneNumberAlreadyRegisteredException();
+        }
+    }
+
+    private String normalizeName(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.trim().replaceAll("\\s+", " ");
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) {
+            return "";
+        }
+
+        return phoneNumber.trim();
+    }
+
+    private RuntimeException translateRegistrationConflict(
+            DataIntegrityViolationException exception
+    ) {
+        String constraintName = findConstraintName(exception);
+
+        if (constraintName != null) {
+            String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
+
+            if (normalizedConstraint.contains("email")) {
+                return new EmailAlreadyRegisteredException();
+            }
+
+            if (normalizedConstraint.contains("phone_number")
+                    || normalizedConstraint.contains("phone")) {
+                return new PhoneNumberAlreadyRegisteredException();
+            }
+        }
+
+        return exception;
+    }
+
+    private String findConstraintName(Throwable exception) {
+        Throwable current = exception;
+
+        while (current != null) {
+            if (current instanceof ConstraintViolationException violation) {
+                return violation.getConstraintName();
+            }
+
+            current = current.getCause();
+        }
+
+        return null;
     }
 
     private BankUser getCustomerForUpdate(UUID customerId) {

@@ -182,6 +182,9 @@ public final class CustomerSearchSpecification {
                             cb.isFalse(root.get("accountNonLocked")),
                             cb.isTrue(root.get("enabled"))
                     );
+
+            case CLOSED ->
+                    cb.isTrue(root.get("identityClosed"));
         };
     }
 

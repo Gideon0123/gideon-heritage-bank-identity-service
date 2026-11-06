@@ -54,7 +54,6 @@ public class AuthenticationService {
     /*
      * A dummy Argon2 hash helps reduce the obvious timing difference
      * between an unknown email address and an incorrect password.
-     *
      * This is a supplementary mitigation, not a complete defence
      * against account enumeration.
      */
@@ -67,12 +66,7 @@ public class AuthenticationService {
         dummyPasswordHash = passwordEncoder.encode(dummyPassword);
     }
 
-    /*
-     * ============================================================
-     * LOGIN
-     * ============================================================
-     */
-
+    /* LOGIN */
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public AuthenticationResult login(LoginRequest request) {
 
@@ -91,9 +85,7 @@ public class AuthenticationService {
 
         BankUser user = userOptional.get();
 
-        /*
-         * Verify the submitted password.
-         */
+        /* Verify the submitted password. */
         boolean passwordMatches = passwordEncoder.matches(
                 rawPassword,
                 user.getPasswordHash()
@@ -101,13 +93,10 @@ public class AuthenticationService {
 
         Instant now = Instant.now();
 
-        /*
-         * Check whether the account is locked.
-         *
+        /* Check whether the account is locked.
          * A lock with a future expiry remains active.
          * A lock with no expiry is treated as an administrative lock.
-         * An expired timed lock can be cleared automatically.
-         */
+         * An expired timed lock can be cleared automatically */
         if (!user.isAccountNonLocked()) {
 
             Instant lockedUntil = user.getLockedUntil();
@@ -122,9 +111,7 @@ public class AuthenticationService {
             }
         }
 
-        /*
-         * Do not authenticate disabled or unverified accounts.
-         */
+        /* Do not authenticate disabled or unverified accounts. */
         if (user.isSuspended()) {
             throw new BadRequest(
                     "Account is suspended. Please contact support for assistance."
@@ -145,9 +132,7 @@ public class AuthenticationService {
             throw new AccountLockedException("Account is locked. Please try again later or Verify your email if you haven't done so.");
         }
 
-        /*
-         * Record an invalid password.
-         */
+        /* Record an invalid password. */
         if (!passwordMatches) {
 
             int failedAttempts = user.getFailedLoginAttempts() + 1;
