@@ -34,7 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomerClosureService {
 
-    @Value("${identity.retention.closed-customer-review-period:P7Y}")
+    @Value("${identity.retention.closed-customer-review-period:P2555D}")
     private Duration closedCustomerReviewPeriod;
 
     private static final List<CustomerClosureStatus> OPEN_STATUSES = List.of(

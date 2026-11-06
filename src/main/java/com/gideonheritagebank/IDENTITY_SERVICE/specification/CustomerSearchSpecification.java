@@ -155,16 +155,33 @@ public final class CustomerSearchSpecification {
 
         return switch (status) {
 
-            case LOCKED -> cb.isFalse(root.get("accountNonLocked"));
+            case CLOSED -> cb.isTrue(root.get("identityClosed"));
+
+            case SUSPENDED ->
+                    cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isTrue(root.get("suspended"))
+                    );
+
+            case LOCKED ->
+                    cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isFalse(root.get("suspended")),
+                            cb.isFalse(root.get("accountNonLocked"))
+                    );
 
             case DISABLED ->
                     cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isFalse(root.get("suspended")),
                             cb.isTrue(root.get("accountNonLocked")),
                             cb.isFalse(root.get("enabled"))
                     );
 
             case PENDING_VERIFICATION ->
                     cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isFalse(root.get("suspended")),
                             cb.isTrue(root.get("accountNonLocked")),
                             cb.isTrue(root.get("enabled")),
                             cb.isFalse(root.get("emailVerified"))
@@ -172,19 +189,12 @@ public final class CustomerSearchSpecification {
 
             case ACTIVE ->
                     cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isFalse(root.get("suspended")),
                             cb.isTrue(root.get("accountNonLocked")),
                             cb.isTrue(root.get("enabled")),
                             cb.isTrue(root.get("emailVerified"))
                     );
-
-            case SUSPENDED ->
-                    cb.and(
-                            cb.isFalse(root.get("accountNonLocked")),
-                            cb.isTrue(root.get("enabled"))
-                    );
-
-            case CLOSED ->
-                    cb.isTrue(root.get("identityClosed"));
         };
     }
 

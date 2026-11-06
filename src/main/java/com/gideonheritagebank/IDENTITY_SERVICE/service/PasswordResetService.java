@@ -50,12 +50,7 @@ public class PasswordResetService {
     @Value("${identity.password-reset.frontend-url:http://localhost:3000/reset-password}")
     private String frontendResetUrl;
 
-    /*
-     * ============================================================
-     * FORGOT PASSWORD
-     * ============================================================
-     */
-
+    /* FORGOT PASSWORD */
     @Transactional
     public void requestPasswordReset(String suppliedEmail) {
 
@@ -75,10 +70,8 @@ public class PasswordResetService {
 
         /*
          * Do not issue reset tokens for disabled or unverified identities.
-         *
          * This check does not reveal the account state because the
          * controller always returns the same generic response.
-         *
          * An account that is temporarily locked after failed logins
          * may still request a password reset.
          */
@@ -91,7 +84,6 @@ public class PasswordResetService {
 
         /*
          * Invalidate earlier outstanding reset tokens.
-         *
          * The schema does not contain a separate revoked_at field for
          * password-reset tokens, so used_at also records invalidation.
          */
@@ -152,12 +144,7 @@ public class PasswordResetService {
         );
     }
 
-    /*
-     * ============================================================
-     * RESET PASSWORD
-     * ============================================================
-     */
-
+    /* RESET PASSWORD */
     @Transactional
     public void resetPassword(
             String rawToken,
@@ -191,21 +178,16 @@ public class PasswordResetService {
 
         Instant now = Instant.now();
 
-//        if (resetToken.getUsedAt() != null) {
-//            throw new ConflictException(
-//                    "This password reset token has already been used or invalidated"
-//            );
-//        }
+        if (resetToken.getUsedAt() != null) {
+            throw new BadRequest("Invalid or expired password reset token.");
+        }
 
         if (!resetToken.getExpiresAt().isAfter(now)) {
-            throw new VerificationTokenExpired(
-                    "Password reset token has expired"
-            );
+            throw new VerificationTokenExpired("Password reset token has expired");
         }
 
         /*
          * Lock the user row as well.
-         *
          * This reduces races with other operations that modify the
          * same identity, provided those operations use compatible locks.
          */
@@ -224,32 +206,21 @@ public class PasswordResetService {
             throw new BadRequest("Password reset is not available for this account");
         }
 
-        /*
-         * Avoid accepting the same password again.
-         */
-
+        /* Avoid accepting the same password again. */
         if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
             throw new BadRequest("The new password must differ from the current password");
         }
 
-        /*
-         * Change the password.
-         */
+        /* Change the password. */
         user.setPasswordHash(passwordEncoder.encode(newPassword));
 
         bankUserRepository.saveAndFlush(user);
 
-        /*
-         * Consume the submitted token.
-         */
-
+        /* Consume the submitted token. */
         resetToken.setUsedAt(now);
         passwordResetTokenRepository.saveAndFlush(resetToken);
 
-        /*
-         * Invalidate any other outstanding password-reset tokens.
-         */
-
+        /* Invalidate any other outstanding password-reset tokens. */
         List<PasswordResetToken> otherTokens =
                 passwordResetTokenRepository.findAllByUser_Id(userId);
 
@@ -267,25 +238,16 @@ public class PasswordResetService {
 
         /*
          * Revoke every active refresh-token session.
-         *
          * The password change, token consumption, and session revocation
          * all occur in the same database transaction.
          */
 
         revokeAllActiveRefreshTokens(user, now);
 
-        log.info(
-                "Password reset completed for userId={}",
-                userId
-        );
+        log.info("Password reset completed for userId={}", userId);
     }
 
-    /*
-     * ============================================================
-     * PRIVATE HELPERS
-     * ============================================================
-     */
-
+    /* PRIVATE HELPERS */
     private String generateRawToken() {
 
         byte[] randomBytes = new byte[32];
@@ -306,10 +268,7 @@ public class PasswordResetService {
 
         } catch (NoSuchAlgorithmException exception) {
 
-            /*
-             * SHA-256 is required by the Java platform.
-             */
-
+            /* SHA-256 is required by the Java platform. */
             throw new IllegalStateException(
                     "SHA-256 is not available",
                     exception
@@ -336,7 +295,6 @@ public class PasswordResetService {
             BankUser user,
             Instant now
     ) {
-
         List<RefreshToken> tokens = refreshTokenRepository.findAllByUser_Id(user.getId());
 
         boolean changed = false;

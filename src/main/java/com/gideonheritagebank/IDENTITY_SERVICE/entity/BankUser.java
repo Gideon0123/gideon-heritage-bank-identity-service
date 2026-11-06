@@ -266,11 +266,8 @@ public class BankUser {
             String reason,
             Instant retentionReviewAt
     ) {
-
         if (this.identityClosed) {
-            throw new IllegalStateException(
-                    "Customer identity is already closed."
-            );
+            throw new IllegalStateException("Customer identity is already closed.");
         }
 
         this.identityClosed = true;

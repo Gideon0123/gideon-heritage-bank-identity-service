@@ -358,6 +358,12 @@ public class IdentityService {
             throw new IdentityNotFoundException(customerId);
         }
 
+        if (customer.isIdentityClosed()) {
+            throw new InvalidIdentityStateException(
+                    "A closed customer identity cannot undergo further lifecycle changes."
+            );
+        }
+
         return customer;
     }
 

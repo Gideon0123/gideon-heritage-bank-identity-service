@@ -9,6 +9,10 @@ public class CustomerIdentityStatusResolver {
 
     public CustomerIdentityStatus resolve(BankUser user) {
 
+        if (user.isIdentityClosed()) {
+            return CustomerIdentityStatus.CLOSED;
+        }
+
         if (user.isSuspended()) {
             return CustomerIdentityStatus.SUSPENDED;
         }

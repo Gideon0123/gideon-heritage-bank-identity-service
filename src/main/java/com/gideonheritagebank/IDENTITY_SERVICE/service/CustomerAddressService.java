@@ -201,6 +201,12 @@ public class CustomerAddressService {
                     "This operation is only available to customer identities"
             );
         }
+
+        if (user.isIdentityClosed()) {
+            throw new BusinessException(
+                    "This customer identity has been closed."
+            );
+        }
     }
 
     private UserAddress getCustomerAddress(
