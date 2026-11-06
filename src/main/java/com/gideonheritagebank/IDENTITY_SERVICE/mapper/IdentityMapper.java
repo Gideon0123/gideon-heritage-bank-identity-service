@@ -1,9 +1,11 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.mapper;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressResponse;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerClosureResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.CustomerClosureRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.CustomerIdentityStatus;
@@ -56,4 +58,14 @@ public interface IdentityMapper {
     default RoleName map(Role role) {
         return role == null ? null : role.getName();
     }
+
+    @Mapping(target = "customerId", source = "customer.id")
+    @Mapping(target = "customerNumber", source = "customer.customerNumber")
+    @Mapping(
+            target = "customerName",
+            expression = "java(request.getCustomer().getFirstName() + \" \" + request.getCustomer().getLastName())"
+    )
+    @Mapping(target = "reviewedBy", source = "reviewedBy.id")
+    @Mapping(target = "completedBy", source = "completedBy.id")
+    CustomerClosureResponse toCustomerClosureResponse(CustomerClosureRequest request);
 }
