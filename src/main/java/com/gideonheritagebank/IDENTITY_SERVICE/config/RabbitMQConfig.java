@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    /**
+    /*
      * Declares the direct exchange used by the Identity Service
      * to publish customer email-verification messages.
      */
@@ -79,6 +79,27 @@ public class RabbitMQConfig {
     ) {
         return BindingBuilder
                 .bind(passwordResetQueue)
+                .to(identityNotificationExchange)
+                .with(routingKey);
+    }
+
+    @Bean
+    public Queue staffOnboardingQueue(
+            @Value("${identity.messaging.staff-onboarding-queue:identity.staff-onboarding}")
+            String queueName
+    ) {
+        return QueueBuilder.durable(queueName).build();
+    }
+
+    @Bean
+    public Binding staffOnboardingBinding(
+            Queue staffOnboardingQueue,
+            DirectExchange identityNotificationExchange,
+            @Value("${identity.messaging.staff-onboarding-routing-key:notification.staff-onboarding}")
+            String routingKey
+    ) {
+        return BindingBuilder
+                .bind(staffOnboardingQueue)
                 .to(identityNotificationExchange)
                 .with(routingKey);
     }
