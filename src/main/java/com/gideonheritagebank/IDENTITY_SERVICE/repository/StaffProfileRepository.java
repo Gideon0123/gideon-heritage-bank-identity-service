@@ -6,8 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StaffProfileRepository
-        extends JpaRepository<StaffProfile, UUID> {
+public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID> {
 
     Optional<StaffProfile> findByUser_Id(UUID userId);
 

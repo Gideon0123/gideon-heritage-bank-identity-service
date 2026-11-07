@@ -16,8 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping({
-        "/staff",
-        "/api/v1/identity/staff"
+        "/staff", "/api/v1/identity/staff"
 })
 @RequiredArgsConstructor
 public class StaffIdentityController {
@@ -31,7 +30,6 @@ public class StaffIdentityController {
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             HttpServletRequest request
     ) {
-
         IdentityResponse identity = staffIdentityService.createStaffIdentity(requestBody);
 
         ApiResponse<IdentityResponse> response = ApiResponse.success(
@@ -46,6 +44,4 @@ public class StaffIdentityController {
                 .body(response);
     }
 
-
 }
-

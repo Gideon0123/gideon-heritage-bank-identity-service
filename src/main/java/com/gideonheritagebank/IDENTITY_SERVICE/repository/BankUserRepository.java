@@ -12,8 +12,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface BankUserRepository
-        extends JpaRepository<BankUser, UUID>,
+public interface BankUserRepository extends JpaRepository<BankUser, UUID>,
         JpaSpecificationExecutor<BankUser> {
 
     Optional<BankUser> findByEmail(String email);

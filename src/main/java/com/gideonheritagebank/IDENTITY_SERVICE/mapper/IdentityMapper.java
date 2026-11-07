@@ -19,8 +19,6 @@ public interface IdentityMapper {
     @Mapping(target = "roles", source = "roles")
     IdentityResponse toIdentityResponse(BankUser user);
 
-//    CustomerProfileResponse toCustomerProfileResponse(BankUser user);
-
     CustomerAddressResponse toCustomerAddressResponse(UserAddress address);
 
     @Mapping(

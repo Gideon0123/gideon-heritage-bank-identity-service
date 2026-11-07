@@ -34,7 +34,6 @@ public class EmailVerificationService {
     private final EmailVerificationTokenRepository tokenRepository;
     private final BankUserRepository bankUserRepository;
     private final ApplicationEventPublisher eventPublisher;
-
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${identity.verification.token-ttl:PT24H}")

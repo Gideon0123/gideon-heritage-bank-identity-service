@@ -6,23 +6,41 @@ import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RoleRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffOnboardingTokenRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffOnboardingToken;
+import com.gideonheritagebank.IDENTITY_SERVICE.event.StaffOnboardingRequestedEvent;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.Base64;
+import java.util.HexFormat;
+import java.util.List;
 import java.util.Locale;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StaffIdentityService {
 
@@ -33,11 +51,21 @@ public class StaffIdentityService {
     private final StaffProfileRepository staffProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final IdentityMapper identityMapper;
+    private final StaffOnboardingTokenRepository staffOnboardingTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${identity.staff-onboarding.token-ttl:PT30M}")
+    private Duration onboardingTokenTtl;
+
+    @Value("${identity.staff-onboarding.frontend-url:http://localhost:3000/staff/onboarding}")
+    private String frontendOnboardingUrl;
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public IdentityResponse createStaffIdentity(
             StaffIdentityCreationRequest request
     ) {
+
         String firstName = normalizeName(request.getFirstName());
         String lastName = normalizeName(request.getLastName());
         String email = normalizeEmail(request.getEmail());
@@ -45,7 +73,11 @@ public class StaffIdentityService {
         String employeeNumber = normalizeEmployeeNumber(request.getEmployeeNumber());
 
         validateRequiredFields(
-                firstName, lastName, email, phoneNumber, employeeNumber
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                employeeNumber
         );
 
         validateHireDate(request.getHireDate());
@@ -64,38 +96,36 @@ public class StaffIdentityService {
 
         Role staffRole = findRequiredRole(RoleName.STAFF);
 
-        RoleName specificRoleName = RoleName.valueOf(
-                request.getStaffRole().name()
+        RoleName specificRoleName = mapStaffRoleToRoleName(
+                request.getStaffRole()
         );
 
         Role specificStaffRole = findRequiredRole(specificRoleName);
 
         /*
-         * Generate a random, undisclosed temporary secret.
+         * Generate an undisclosed random initial secret.
          *
-         * The raw secret is never returned, logged, or persisted.
-         * The account remains disabled until the proper onboarding
-         * and credential-setup flow is implemented.
+         * The employee will replace this with their own password
+         * when completing onboarding.
          */
         String temporarySecret = generateTemporarySecret();
         String passwordHash = passwordEncoder.encode(temporarySecret);
 
-        // Do not retain the raw secret beyond the hashing operation.
         temporarySecret = null;
 
         BankUser staffUser = BankUser.createStaff(
-                firstName, lastName, email, phoneNumber, passwordHash
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                passwordHash
         );
 
         staffUser.addRole(staffRole);
         staffUser.addRole(specificStaffRole);
 
         try {
-            /*
-             * Save the user first to obtain its generated UUID.
-             * The surrounding transaction keeps the user and profile
-             * creation atomic.
-             */
+
             BankUser savedUser = bankUserRepository.saveAndFlush(staffUser);
 
             StaffProfile profile = StaffProfile.create(
@@ -107,15 +137,75 @@ public class StaffIdentityService {
 
             savedUser.assignStaffProfile(profile);
 
-            /*
-             * Persist the profile explicitly. The one-to-one relationship
-             * is owned by StaffProfile.user.
-             */
             staffProfileRepository.saveAndFlush(profile);
+
+            /*
+             * Generate a one-time onboarding token.
+             */
+            String rawToken = generateTemporarySecret();
+            String tokenHash = hashOnboardingToken(rawToken);
+
+            Instant now = Instant.now();
+            Instant expiresAt = now.plus(onboardingTokenTtl);
+
+            /*
+             * Invalidate previous outstanding onboarding tokens.
+             */
+            List<StaffOnboardingToken> previousTokens =
+                    staffOnboardingTokenRepository.findAllByUser_Id(
+                            savedUser.getId()
+                    );
+
+            for (StaffOnboardingToken previousToken : previousTokens) {
+
+                if (!previousToken.isUsed()
+                        && !previousToken.isRevoked()) {
+
+                    previousToken.revoke(now);
+                }
+            }
+
+            if (!previousTokens.isEmpty()) {
+                staffOnboardingTokenRepository.saveAllAndFlush(previousTokens);
+            }
+
+            StaffOnboardingToken onboardingToken =
+                    new StaffOnboardingToken(
+                            savedUser,
+                            tokenHash,
+                            expiresAt
+                    );
+
+            staffOnboardingTokenRepository.saveAndFlush(onboardingToken);
+
+            /*
+             * Construct the invitation URL.
+             */
+            String onboardingUrl = buildOnboardingUrl(rawToken);
+
+            /*
+             * The listener publishes to RabbitMQ only after commit.
+             */
+            eventPublisher.publishEvent(
+                    new StaffOnboardingRequestedEvent(
+                            savedUser.getId(),
+                            savedUser.getEmail(),
+                            savedUser.getFirstName(),
+                            rawToken,
+                            onboardingUrl,
+                            expiresAt
+                    )
+            );
+
+            log.info(
+                    "Staff identity provisioned and onboarding initiated for userId={}",
+                    savedUser.getId()
+            );
 
             return identityMapper.toIdentityResponse(savedUser);
 
         } catch (DataIntegrityViolationException exception) {
+
             throw translateStaffConflict(exception);
         }
     }
@@ -215,5 +305,51 @@ public class StaffIdentityService {
         }
 
         return null;
+    }
+
+    private RoleName mapStaffRoleToRoleName(StaffRole staffRole) {
+
+        if (staffRole == null) {
+            throw new InvalidRegistrationException(
+                    "Staff position is required"
+            );
+        }
+
+        return switch (staffRole) {
+            case CASHIER -> RoleName.CASHIER;
+            case MANAGER -> RoleName.MANAGER;
+            case BRANCH_MANAGER -> RoleName.BRANCH_MANAGER;
+            case ADMIN -> RoleName.ADMIN;
+            case RISK_OFFICER -> RoleName.RISK_OFFICER;
+            case SUPPORT_AGENT -> RoleName.SUPPORT_AGENT;
+        };
+    }
+
+    private String hashOnboardingToken(String rawToken) {
+
+        try {
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            byte[] hash = digest.digest(
+                    rawToken.getBytes(StandardCharsets.UTF_8)
+            );
+
+            return HexFormat.of().formatHex(hash);
+
+        } catch (NoSuchAlgorithmException exception) {
+
+            throw new IllegalStateException("SHA-256 is not available");
+        }
+    }
+
+    private String buildOnboardingUrl(String rawToken) {
+
+        return UriComponentsBuilder
+                .fromUriString(frontendOnboardingUrl)
+                .queryParam("token", "{token}")
+                .encode()
+                .buildAndExpand(rawToken)
+                .toUriString();
     }
 }
