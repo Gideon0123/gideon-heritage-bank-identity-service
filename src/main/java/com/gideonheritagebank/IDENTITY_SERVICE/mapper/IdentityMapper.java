@@ -1,15 +1,13 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.mapper;
 
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerClosureResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.CustomerClosureRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.CustomerIdentityStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffIdentityStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -66,4 +64,48 @@ public interface IdentityMapper {
     @Mapping(target = "reviewedBy", source = "reviewedBy.id")
     @Mapping(target = "completedBy", source = "completedBy.id")
     CustomerClosureResponse toCustomerClosureResponse(CustomerClosureRequest request);
+
+    @Mapping(target = "employeeNumber", source = "staffProfile.employeeNumber")
+    @Mapping(target = "staffRole", source = "staffProfile.staffRole")
+    @Mapping(target = "hireDate", source = "staffProfile.hireDate")
+    @Mapping(target = "lastLoginAt", source = "staffProfile.lastLoginAt")
+    @Mapping(target = "identityStatus", expression = "java(resolveStaffIdentityStatus(user))")
+    StaffResponse toStaffResponse(BankUser user);
+
+    default StaffIdentityStatus resolveStaffIdentityStatus(BankUser user) {
+
+        if (user.isIdentityClosed()) {
+            return StaffIdentityStatus.CLOSED;
+        }
+
+        if (user.isSuspended()) {
+            return StaffIdentityStatus.SUSPENDED;
+        }
+
+        if (!user.isAccountNonLocked()) {
+            return StaffIdentityStatus.LOCKED;
+        }
+
+        /*
+         * A newly provisioned staff member has:
+         * enabled = false
+         * emailVerified = false
+         *
+         * They remain pending onboarding until they complete
+         * the invitation and password setup process.
+         */
+        if (!user.isEnabled() && !user.isEmailVerified()) {
+            return StaffIdentityStatus.PENDING_ONBOARDING;
+        }
+
+        if (!user.isEnabled()) {
+            return StaffIdentityStatus.DISABLED;
+        }
+
+        if (!user.isEmailVerified()) {
+            return StaffIdentityStatus.PENDING_VERIFICATION;
+        }
+
+        return StaffIdentityStatus.ACTIVE;
+    }
 }
