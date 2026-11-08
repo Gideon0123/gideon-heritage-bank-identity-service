@@ -11,7 +11,6 @@ import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.InvalidIdentityStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
@@ -68,19 +67,19 @@ public class StaffEmploymentService {
 
         if (staffUser == null || staffUser.getUserType() != UserType.STAFF) {
 
-            throw new InvalidIdentityStateException(
+            throw new BadRequest(
                     "Employment can only be updated for a staff identity"
             );
         }
 
         if (staffUser.isIdentityClosed()) {
-            throw new InvalidIdentityStateException(
+            throw new BadRequest(
                     "Employment cannot be updated for a closed identity"
             );
         }
 
         if (profile.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
-            throw new InvalidIdentityStateException(
+            throw new BadRequest(
                     "A terminated staff member's employment cannot be modified"
             );
         }
@@ -96,7 +95,7 @@ public class StaffEmploymentService {
                 .findFirstByStaffProfile_IdAndEffectiveToIsNull(
                         staffProfileId
                 )
-                .orElseThrow(() -> new InvalidIdentityStateException(
+                .orElseThrow(() -> new BadRequest(
                                 "Current employment history record is missing"
                         )
                 );
