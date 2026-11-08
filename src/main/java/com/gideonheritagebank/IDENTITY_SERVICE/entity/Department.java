@@ -41,7 +41,6 @@ public class Department {
     @Column(
             name = "department_code",
             nullable = false,
-            unique = true,
             length = 30
     )
     private String departmentCode;
@@ -53,16 +52,10 @@ public class Department {
     )
     private String name;
 
-    @Column(
-            name = "description",
-            length = 500
-    )
+    @Column(length = 500)
     private String description;
 
-    @Column(
-            name = "is_active",
-            nullable = false
-    )
+    @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     @CreationTimestamp
@@ -74,10 +67,7 @@ public class Department {
     private Instant createdAt;
 
     @UpdateTimestamp
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Department(

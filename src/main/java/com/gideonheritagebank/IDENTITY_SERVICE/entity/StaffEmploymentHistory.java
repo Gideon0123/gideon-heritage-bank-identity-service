@@ -1,5 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,12 +27,12 @@ import java.util.UUID;
                         columnList = "department_id"
                 ),
                 @Index(
-                        name = "idx_staff_employment_history_effective_dates",
-                        columnList = "effective_from,effective_to"
-                ),
-                @Index(
                         name = "idx_staff_employment_history_branch",
                         columnList = "branch_id"
+                ),
+                @Index(
+                        name = "idx_staff_employment_history_effective_dates",
+                        columnList = "effective_from,effective_to"
                 )
         }
 )
@@ -52,77 +54,48 @@ public class StaffEmploymentHistory {
     private StaffProfile staffProfile;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "department_id"
-    )
+    @JoinColumn(name = "department_id")
     private Department department;
 
     /*
-     * Snapshot values preserve the department's identity
-     * as it was when this employment assignment was recorded.
+     * Historical snapshots.
      *
-     * This is useful if the department is renamed later.
+     * These preserve the department's code and name
+     * even if the Department entity is renamed later.
      */
-    @Column(
-            name = "department_code_snapshot",
-            length = 30
-    )
+    @Column(name = "department_code_snapshot", length = 30)
     private String departmentCodeSnapshot;
 
-    @Column(
-            name = "department_name_snapshot",
-            length = 120
-    )
+    @Column(name = "department_name_snapshot", length = 120)
     private String departmentNameSnapshot;
 
     /*
-     * The Branch Service will own actual branch records.
-     * We store its identifier here without a JPA relationship.
+     * Reference to the future Branch Service.
+     * There is deliberately no JPA relationship.
      */
     @Column(name = "branch_id")
     private UUID branchId;
 
-    @Column(
-            name = "job_title",
-            length = 120
-    )
+    @Column(name = "job_title", length = 120)
     private String jobTitle;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "employment_type",
-            length = 30
-    )
-    private com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentType
-            employmentType;
+    @Column(name = "employment_type", length = 30)
+    private EmploymentType employmentType;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "employment_status",
-            length = 30
-    )
-    private com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus
-            employmentStatus;
+    @Column(name = "employment_status", nullable = false, length = 30)
+    private EmploymentStatus employmentStatus;
 
-    @Column(
-            name = "effective_from",
-            nullable = false
-    )
+    @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;
 
     @Column(name = "effective_to")
     private LocalDate effectiveTo;
 
-    @Column(
-            name = "change_reason",
-            length = 500
-    )
+    @Column(name = "change_reason", length = 500)
     private String changeReason;
 
-    /*
-     * The administrator or authorized staff member
-     * who made the employment assignment.
-     */
     @Column(name = "changed_by_user_id")
     private UUID changedByUserId;
 
@@ -139,36 +112,30 @@ public class StaffEmploymentHistory {
             Department department,
             UUID branchId,
             String jobTitle,
-            com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentType
-                    employmentType,
-            com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus
-                    employmentStatus,
+            EmploymentType employmentType,
+            EmploymentStatus employmentStatus,
             LocalDate effectiveFrom,
             String changeReason,
             UUID changedByUserId
     ) {
-        this.staffProfile = staffProfile;
 
+        this.staffProfile = staffProfile;
         this.department = department;
 
-        this.departmentCodeSnapshot =
-                department != null ? department.getDepartmentCode() : null;
+        this.departmentCodeSnapshot = department != null
+                ? department.getDepartmentCode()
+                : null;
 
-        this.departmentNameSnapshot =
-                department != null ? department.getName() : null;
+        this.departmentNameSnapshot = department != null
+                ? department.getName()
+                : null;
 
         this.branchId = branchId;
-
         this.jobTitle = jobTitle;
-
         this.employmentType = employmentType;
-
         this.employmentStatus = employmentStatus;
-
         this.effectiveFrom = effectiveFrom;
-
         this.changeReason = changeReason;
-
         this.changedByUserId = changedByUserId;
     }
 
