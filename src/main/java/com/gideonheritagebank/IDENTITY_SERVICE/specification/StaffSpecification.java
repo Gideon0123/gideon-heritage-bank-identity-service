@@ -1,6 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.specification;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffIdentityStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.StaffFilterRequest;
@@ -40,7 +41,7 @@ public final class StaffSpecification {
              * An inner join ensures that only properly provisioned
              * staff identities with a profile are returned.
              */
-            Join<Object, Object> staffProfile =
+            Join<BankUser, StaffProfile> staffProfile =
                     root.join("staffProfile", JoinType.INNER);
 
             if (filter.getEnabled() != null) {
@@ -129,12 +130,11 @@ public final class StaffSpecification {
         };
     }
 
-    private static Predicate statusPredicate(
+    static Predicate statusPredicate(
             StaffIdentityStatus status,
             jakarta.persistence.criteria.Root<BankUser> root,
             jakarta.persistence.criteria.CriteriaBuilder cb
     ) {
-
         return switch (status) {
 
             case CLOSED -> cb.isTrue(root.get("identityClosed"));

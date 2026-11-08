@@ -3,6 +3,7 @@ package com.gideonheritagebank.IDENTITY_SERVICE.specification;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.StaffFilterRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.StaffSearchRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffIdentityStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 
@@ -33,7 +34,7 @@ public final class StaffSearchSpecification {
                     cb.equal(root.get("userType"), UserType.STAFF)
             );
 
-            Join<Object, Object> staffProfile =
+            Join<BankUser, StaffProfile> staffProfile =
                     root.join("staffProfile", JoinType.INNER);
 
             /*
@@ -179,9 +180,9 @@ public final class StaffSearchSpecification {
             // Filter by identity status.
             if (request.getStatus() != null) {
                 predicates.add(
-                        StaffSpecification.withFilters(
-                                createStatusFilter(request.getStatus())
-                        ).toPredicate(root, query, cb)
+                        StaffSpecification.statusPredicate(
+                                request.getStatus(), root, cb
+                        )
                 );
             }
 
