@@ -2,18 +2,14 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.StaffIdentityCreationRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.Role;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.*;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.RoleRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffOnboardingTokenRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,7 +17,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffOnboardingToken;
 import com.gideonheritagebank.IDENTITY_SERVICE.event.StaffOnboardingRequestedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,6 +44,7 @@ public class StaffIdentityService {
     private final BankUserRepository bankUserRepository;
     private final RoleRepository roleRepository;
     private final StaffProfileRepository staffProfileRepository;
+    private final StaffEmploymentHistoryRepository staffEmploymentHistoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final IdentityMapper identityMapper;
     private final StaffOnboardingTokenRepository staffOnboardingTokenRepository;
@@ -135,22 +131,58 @@ public class StaffIdentityService {
                     request.getHireDate()
             );
 
+            /*
+             * Explicitly initialize the employment fields.
+             *
+             * The employee has not completed onboarding yet, so the
+             * initial employment status is PENDING.
+             */
+            profile.setAssignmentStartDate(request.getHireDate());
+            profile.setEmploymentStatus(EmploymentStatus.PENDING);
+            profile.setEmploymentEndDate(null);
             savedUser.assignStaffProfile(profile);
 
             staffProfileRepository.saveAndFlush(profile);
 
             /*
-             * Generate a one-time onboarding token.
+             * Create the initial employment-history record.
+             *
+             * At provisioning time:
+             *
+             * - No department has been assigned.
+             * - No branch has been assigned.
+             * - No job title has been assigned.
+             * - No employment type has been specified.
+             * - Employment status is PENDING.
+             *
+             * I deliberately leave changedByUserId null here because
+             * the provisioning service has not been given the authenticated
+             * administrator's user ID.
              */
+            StaffEmploymentHistory initialHistory = new StaffEmploymentHistory(
+                    profile,
+                    null,
+                    null,
+                    null,
+                    null,
+                    EmploymentStatus.PENDING,
+                    request.getHireDate(),
+                    "Initial employment record created during staff provisioning",
+                    null
+            );
+
+            profile.addEmploymentHistory(initialHistory);
+
+            staffEmploymentHistoryRepository.saveAndFlush(initialHistory);
+
+            /* Generate a one-time onboarding token. */
             String rawToken = generateTemporarySecret();
             String tokenHash = hashOnboardingToken(rawToken);
 
             Instant now = Instant.now();
             Instant expiresAt = now.plus(onboardingTokenTtl);
 
-            /*
-             * Invalidate previous outstanding onboarding tokens.
-             */
+            /* Invalidate previous outstanding onboarding tokens. */
             List<StaffOnboardingToken> previousTokens =
                     staffOnboardingTokenRepository.findAllByUser_Id(
                             savedUser.getId()
@@ -158,8 +190,7 @@ public class StaffIdentityService {
 
             for (StaffOnboardingToken previousToken : previousTokens) {
 
-                if (!previousToken.isUsed()
-                        && !previousToken.isRevoked()) {
+                if (!previousToken.isUsed() && !previousToken.isRevoked()) {
 
                     previousToken.revoke(now);
                 }
@@ -169,12 +200,11 @@ public class StaffIdentityService {
                 staffOnboardingTokenRepository.saveAllAndFlush(previousTokens);
             }
 
-            StaffOnboardingToken onboardingToken =
-                    new StaffOnboardingToken(
-                            savedUser,
-                            tokenHash,
-                            expiresAt
-                    );
+            StaffOnboardingToken onboardingToken = new StaffOnboardingToken(
+                    savedUser,
+                    tokenHash,
+                    expiresAt
+            );
 
             staffOnboardingTokenRepository.saveAndFlush(onboardingToken);
 
