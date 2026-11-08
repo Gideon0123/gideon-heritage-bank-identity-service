@@ -16,18 +16,15 @@ public record StaffEmploymentHistoryResponse(
         String departmentName,
 
         UUID branchId,
-
         String jobTitle,
 
         EmploymentType employmentType,
-
         EmploymentStatus employmentStatus,
 
         LocalDate effectiveFrom,
         LocalDate effectiveTo,
 
         String changeReason,
-
         UUID changedByUserId,
 
         Instant createdAt

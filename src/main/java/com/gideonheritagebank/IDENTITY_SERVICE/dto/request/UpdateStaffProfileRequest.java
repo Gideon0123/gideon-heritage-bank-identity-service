@@ -13,11 +13,11 @@ public record UpdateStaffProfileRequest(
 
         @Pattern(
                 regexp = "^\\+[1-9]\\d{7,14}$",
-                message = "Phone number must use international format"
+                message = "Phone number must be in valid international E.164 format"
         )
         String phoneNumber,
 
-        @Size(max = 2048, message = "Profile photo URL cannot exceed 2048 characters")
+        @Size(max = 1000, message = "Profile photo URL cannot exceed 1000 characters")
         String profilePhotoUrl
 
 ) {

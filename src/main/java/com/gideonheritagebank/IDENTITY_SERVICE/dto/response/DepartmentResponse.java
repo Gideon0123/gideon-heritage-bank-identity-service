@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record DepartmentResponse(
-
         UUID id,
         String departmentCode,
         String name,
@@ -12,6 +11,5 @@ public record DepartmentResponse(
         boolean active,
         Instant createdAt,
         Instant updatedAt
-
 ) {
 }

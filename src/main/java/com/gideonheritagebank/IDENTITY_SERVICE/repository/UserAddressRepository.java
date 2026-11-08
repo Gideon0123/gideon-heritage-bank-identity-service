@@ -1,6 +1,8 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.repository;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.UserAddress;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,5 +16,10 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, UUID> 
     Optional<UserAddress> findByIdAndUser_Id(UUID addressId, UUID userId);
 
     boolean existsByUser_Id(UUID userId);
+
+    Page<UserAddress> findAllByUser_IdOrderByCreatedAtDesc(
+            UUID userId,
+            Pageable pageable
+    );
 
 }
