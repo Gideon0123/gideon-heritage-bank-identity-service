@@ -48,7 +48,7 @@ public class DepartmentController {
     public ResponseEntity<ApiResponse<PagedResponse<DepartmentResponse>>> getDepartments(
             @RequestParam(required = false) Boolean active,
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "name",
                     direction = Sort.Direction.ASC

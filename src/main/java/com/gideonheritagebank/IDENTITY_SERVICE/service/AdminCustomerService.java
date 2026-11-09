@@ -180,9 +180,7 @@ public class AdminCustomerService {
                 && filter.getCreatedTo() != null
                 && filter.getCreatedFrom().isAfter(filter.getCreatedTo())) {
 
-            throw new BusinessException(
-                    "createdFrom cannot be later than createdTo"
-            );
+            throw new BusinessException("createdFrom cannot be later than createdTo");
         }
     }
 

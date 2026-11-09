@@ -4,14 +4,12 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffEmployment
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffEmploymentHistoryResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffEmploymentService;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
