@@ -17,6 +17,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class StaffAddressService {
     private final BankUserRepository bankUserRepository;
     private final UserAddressRepository userAddressRepository;
     private final IdentityMapper identityMapper;
+    private static final int MAX_PAGE_SIZE = 100;
 
     /* GET STAFF ADDRESSES */
     @PreAuthorize("hasRole('ADMIN')")
@@ -41,11 +43,12 @@ public class StaffAddressService {
             Pageable pageable
     ) {
         findStaff(staffUserId);
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
 
         Page<StaffAddressResponse> responsePage = userAddressRepository
                 .findAllByUser_IdOrderByCreatedAtDesc(
                         staffUserId,
-                        pageable
+                        validatedPageable
                 )
                 .map(identityMapper::toStaffAddressResponse);
 
@@ -353,5 +356,17 @@ public class StaffAddressService {
         }
 
         return normalized.toUpperCase(java.util.Locale.ROOT);
+    }
+
+    private Pageable validateAndBuildPageable(Pageable pageable) {
+
+        int pageNumber = Math.max(pageable.getPageNumber() - 1, 0);
+        int pageSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+
+        if (pageSize < 1) {
+            pageSize = 20;
+        }
+
+        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
     }
 }

@@ -44,7 +44,6 @@ public class StaffEmploymentController {
             @Valid @RequestBody UpdateStaffEmploymentRequest requestBody,
             HttpServletRequest request
     ) {
-
         UUID changedByUserId = getAuthenticatedUserId(jwt);
 
         StaffEmploymentHistoryResponse response =

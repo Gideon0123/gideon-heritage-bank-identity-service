@@ -67,9 +67,7 @@ public class StaffEmploymentService {
 
         if (staffUser == null || staffUser.getUserType() != UserType.STAFF) {
 
-            throw new BadRequest(
-                    "Employment can only be updated for a staff identity"
-            );
+            throw new BadRequest("Employment can only be updated for a staff identity");
         }
 
         if (staffUser.isIdentityClosed()) {
@@ -107,7 +105,7 @@ public class StaffEmploymentService {
          */
         currentHistory.setEffectiveTo(effectiveFrom.minusDays(1));
 
-        employmentHistoryRepository.save(currentHistory);
+        employmentHistoryRepository.saveAndFlush(currentHistory);
 
         /* Update the current staff profile. */
         profile.setDepartment(department);
@@ -121,11 +119,7 @@ public class StaffEmploymentService {
 
         staffProfileRepository.save(profile);
 
-        /*
-         * Create the new historical record.
-         * The entity constructor captures department code and name
-         * snapshots at the time of the change.
-         */
+        /* CREATE NEW EMPLOYMENT HISTORY */
         StaffEmploymentHistory newHistory = new StaffEmploymentHistory(
                 profile,
                 department,
@@ -140,18 +134,21 @@ public class StaffEmploymentService {
 
         /*
          * A terminated employment record is terminal.
-         * It therefore has an effectiveTo date instead of remaining
-         * the current open-ended record.
+         * It therefore has an effectiveTo date instead of
+         * remaining an open-ended current record.
          */
         if (request.employmentStatus() == EmploymentStatus.TERMINATED) {
 
             newHistory.setEffectiveTo(request.employmentEndDate());
         }
 
-        profile.addEmploymentHistory(newHistory);
-
-        StaffEmploymentHistory savedHistory =
-                employmentHistoryRepository.saveAndFlush(newHistory);
+        /*
+         * The constructor already associates the history record
+         * with its StaffProfile.
+         *
+         * Save directly through the history repository.
+         */
+        StaffEmploymentHistory savedHistory = employmentHistoryRepository.saveAndFlush(newHistory);
 
         return identityMapper.toStaffEmploymentHistoryResponse(savedHistory);
     }

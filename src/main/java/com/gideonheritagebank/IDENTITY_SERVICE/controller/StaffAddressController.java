@@ -66,7 +66,7 @@ public class StaffAddressController {
     public ResponseEntity<ApiResponse<PagedResponse<StaffAddressResponse>>> getAddresses(
             @PathVariable UUID staffUserId,
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
