@@ -71,7 +71,7 @@ public class StaffEmploymentController {
     public ResponseEntity<ApiResponse<PagedResponse<StaffEmploymentHistoryResponse>>> getEmploymentHistory(
             @PathVariable UUID staffProfileId,
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "effectiveFrom",
                     direction = Sort.Direction.DESC

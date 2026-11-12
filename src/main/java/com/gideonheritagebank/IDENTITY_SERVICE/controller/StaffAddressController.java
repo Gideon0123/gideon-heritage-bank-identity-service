@@ -29,24 +29,17 @@ public class StaffAddressController {
 
     private final StaffAddressService staffAddressService;
 
-    /*
-     * ============================================================
-     * ADD STAFF ADDRESS
-     * ============================================================
-     */
-
+    /* ADD STAFF ADDRESS */
     @PostMapping
     public ResponseEntity<ApiResponse<StaffAddressResponse>> addAddress(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody CreateStaffAddressRequest requestBody,
             HttpServletRequest request
     ) {
-
-        StaffAddressResponse response =
-                staffAddressService.addAddress(
-                        staffUserId,
-                        requestBody
-                );
+        StaffAddressResponse response = staffAddressService.addAddress(
+                staffUserId,
+                requestBody
+        );
 
         return success(
                 "Staff address added successfully.",
@@ -56,12 +49,7 @@ public class StaffAddressController {
         );
     }
 
-    /*
-     * ============================================================
-     * RETRIEVE STAFF ADDRESSES
-     * ============================================================
-     */
-
+    /* RETRIEVE STAFF ADDRESSES */
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<StaffAddressResponse>>> getAddresses(
             @PathVariable UUID staffUserId,
@@ -86,12 +74,27 @@ public class StaffAddressController {
         );
     }
 
-    /*
-     * ============================================================
-     * UPDATE STAFF ADDRESS
-     * ============================================================
-     */
+    /* GET STAFF ADDRESS BY ID */
+    @GetMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<StaffAddressResponse>> getAddressById(
+            @PathVariable UUID staffUserId,
+            @PathVariable UUID addressId,
+            HttpServletRequest request
+    ) {
+        StaffAddressResponse response = staffAddressService.getStaffAddressById(
+                staffUserId,
+                addressId
+        );
 
+        return success(
+                "Staff address retrieved successfully.",
+                response,
+                HttpStatus.OK,
+                request
+        );
+    }
+
+    /* UPDATE STAFF ADDRESS */
     @PatchMapping("/{addressId}")
     public ResponseEntity<ApiResponse<StaffAddressResponse>> updateAddress(
             @PathVariable UUID staffUserId,
@@ -99,13 +102,11 @@ public class StaffAddressController {
             @Valid @RequestBody UpdateStaffAddressRequest requestBody,
             HttpServletRequest request
     ) {
-
-        StaffAddressResponse response =
-                staffAddressService.updateAddress(
-                        staffUserId,
-                        addressId,
-                        requestBody
-                );
+        StaffAddressResponse response = staffAddressService.updateAddress(
+                staffUserId,
+                addressId,
+                requestBody
+        );
 
         return success(
                 "Staff address updated successfully.",
@@ -115,19 +116,13 @@ public class StaffAddressController {
         );
     }
 
-    /*
-     * ============================================================
-     * DELETE STAFF ADDRESS
-     * ============================================================
-     */
-
+    /* DELETE STAFF ADDRESS */
     @DeleteMapping("/{addressId}")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
             @PathVariable UUID staffUserId,
             @PathVariable UUID addressId,
             HttpServletRequest request
     ) {
-
         staffAddressService.deleteAddress(staffUserId, addressId);
 
         return success(
@@ -138,24 +133,17 @@ public class StaffAddressController {
         );
     }
 
-    /*
-     * ============================================================
-     * MAKE ADDRESS PRIMARY
-     * ============================================================
-     */
-
+    /* MAKE ADDRESS PRIMARY */
     @PatchMapping("/{addressId}/primary")
     public ResponseEntity<ApiResponse<StaffAddressResponse>> makePrimary(
             @PathVariable UUID staffUserId,
             @PathVariable UUID addressId,
             HttpServletRequest request
     ) {
-
-        StaffAddressResponse response =
-                staffAddressService.makePrimary(
-                        staffUserId,
-                        addressId
-                );
+        StaffAddressResponse response = staffAddressService.makePrimary(
+                staffUserId,
+                addressId
+        );
 
         return success(
                 "Staff address marked as primary successfully.",
@@ -165,19 +153,13 @@ public class StaffAddressController {
         );
     }
 
-    /*
-     * ============================================================
-     * COMMON HELPER
-     * ============================================================
-     */
-
+    /* COMMON HELPER */
     private <T> ResponseEntity<ApiResponse<T>> success(
             String message,
             T data,
             HttpStatus status,
             HttpServletRequest request
     ) {
-
         String requestId = request.getHeader("X-Request-Id");
 
         if (requestId == null || requestId.isBlank()) {

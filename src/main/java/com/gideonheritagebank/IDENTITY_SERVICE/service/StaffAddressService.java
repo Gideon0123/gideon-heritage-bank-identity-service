@@ -55,6 +55,18 @@ public class StaffAddressService {
         return PagedResponse.from(responsePage);
     }
 
+    /* GET STAFF ADDRESS BY ID */
+    @PreAuthorize("hasRole('ADMIN')")
+    public StaffAddressResponse getStaffAddressById(
+            UUID staffUserId,
+            UUID addressId
+    ) {
+        findStaff(staffUserId);
+        UserAddress address = findAddress(addressId, staffUserId);
+
+        return identityMapper.toStaffAddressResponse(address);
+    }
+
     /* ADD STAFF ADDRESS */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -67,14 +79,19 @@ public class StaffAddressService {
         }
 
         BankUser staff = getStaffForUpdate(staffUserId);
-
         boolean firstAddress = staff.getAddresses().isEmpty();
+
         boolean makePrimary = firstAddress || Boolean.TRUE.equals(request.primary());
 
+        /* DEMOTE EXISTING PRIMARY ADDRESS */
         if (makePrimary) {
             clearPrimaryAddresses(staff);
+
+            // Persist the demotion before inserting the new primary address.
+            userAddressRepository.flush();
         }
 
+        /* CREATE NEW ADDRESS */
         UserAddress address = new UserAddress(
                 normalizeRequired(request.addressLine1(), "Address line 1"),
                 normalizeNullable(request.addressLine2()),
@@ -87,7 +104,6 @@ public class StaffAddressService {
         );
 
         staff.addAddress(address);
-
         bankUserRepository.saveAndFlush(staff);
 
         return identityMapper.toStaffAddressResponse(address);
@@ -108,11 +124,18 @@ public class StaffAddressService {
         BankUser staff = getStaffForUpdate(staffUserId);
         UserAddress address = findAddress(addressId, staffUserId);
         boolean wasPrimary = address.isPrimary();
+
+        /* UPDATE NORMAL ADDRESS FIELDS */
         updateAddressFields(address, request);
 
+        /* HANDLE PRIMARY ADDRESS CHANGES */
         if (Boolean.TRUE.equals(request.primary())) {
 
             clearPrimaryAddresses(staff);
+
+            // Persist all demotions before promoting this address.
+            userAddressRepository.flush();
+
             address.setPrimary(true);
 
         } else if (Boolean.FALSE.equals(request.primary())) {
@@ -120,6 +143,10 @@ public class StaffAddressService {
             address.setPrimary(false);
 
             if (wasPrimary) {
+
+                // Persist the demotion before promoting another address.
+                userAddressRepository.flush();
+
                 promoteAnotherAddress(staff, address);
             }
         }
@@ -140,18 +167,22 @@ public class StaffAddressService {
         UserAddress address = findAddress(addressId, staffUserId);
         boolean wasPrimary = address.isPrimary();
 
+        /* REMOVE ADDRESS */
         staff.removeAddress(address);
 
         if (wasPrimary) {
+
+            // Ensure the old primary address is deleted first.
+            userAddressRepository.flush();
+
+            // Promote the most recently created remaining address.
             promoteAnotherAddress(staff, address);
         }
 
         bankUserRepository.saveAndFlush(staff);
     }
 
-    /*
-     * MAKE STAFF ADDRESS PRIMARY
-     */
+    /* MAKE STAFF ADDRESS PRIMARY */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public StaffAddressResponse makePrimary(
@@ -160,16 +191,22 @@ public class StaffAddressService {
     ) {
         BankUser staff = getStaffForUpdate(staffUserId);
         UserAddress address = findAddress(addressId, staffUserId);
-        clearPrimaryAddresses(staff);
-        address.setPrimary(true);
 
+        /* DEMOTE ALL EXISTING PRIMARY ADDRESSES */
+        clearPrimaryAddresses(staff);
+
+        // Flush the demotions before promoting the selected address.
+        userAddressRepository.flush();
+
+        /* PROMOTE SELECTED ADDRESS */
+        address.setPrimary(true);
         UserAddress savedAddress = userAddressRepository.saveAndFlush(address);
 
         return identityMapper.toStaffAddressResponse(savedAddress);
     }
 
     /* GET STAFF IDENTITY */
-    private BankUser findStaff(UUID staffUserId) {
+    private void findStaff(UUID staffUserId) {
 
         if (staffUserId == null) {
             throw new BadRequest("Staff user ID is required");
@@ -185,7 +222,6 @@ public class StaffAddressService {
 
         validateStaffIdentity(staff);
 
-        return staff;
     }
 
     /*

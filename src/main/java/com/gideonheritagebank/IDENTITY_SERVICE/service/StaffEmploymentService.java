@@ -21,6 +21,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class StaffEmploymentService {
     private final DepartmentRepository departmentRepository;
     private final BankUserRepository bankUserRepository;
     private final IdentityMapper identityMapper;
+    private static final int MAX_PAGE_SIZE = 100;
 
     /*
      * UPDATE STAFF EMPLOYMENT
@@ -164,10 +166,12 @@ public class StaffEmploymentService {
             );
         }
 
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
+
         Page<StaffEmploymentHistoryResponse> responsePage = employmentHistoryRepository
                 .findAllByStaffProfile_IdOrderByEffectiveFromDescCreatedAtDesc(
                         staffProfileId,
-                        pageable
+                        validatedPageable
                 )
                 .map(identityMapper::toStaffEmploymentHistoryResponse);
 
@@ -346,5 +350,17 @@ public class StaffEmploymentService {
         String normalized = value.trim();
 
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Pageable validateAndBuildPageable(Pageable pageable) {
+
+        int pageNumber = Math.max(pageable.getPageNumber() - 1, 0);
+        int pageSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+
+        if (pageSize < 1) {
+            pageSize = 20;
+        }
+
+        return PageRequest.of(pageNumber, pageSize, pageable.getSort());
     }
 }
