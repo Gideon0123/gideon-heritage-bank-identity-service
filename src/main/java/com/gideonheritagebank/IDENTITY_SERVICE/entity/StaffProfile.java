@@ -90,10 +90,7 @@ public class StaffProfile {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
-    // =========================================================
     // CURRENT EMPLOYMENT ASSIGNMENT
-    // =========================================================
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department;
@@ -135,10 +132,7 @@ public class StaffProfile {
     @Column(name = "reporting_manager_id")
     private UUID reportingManagerId;
 
-    // =========================================================
     // EMPLOYMENT HISTORY
-    // =========================================================
-
     @OneToMany(
             mappedBy = "staffProfile",
             cascade = {
@@ -148,10 +142,7 @@ public class StaffProfile {
     )
     private List<StaffEmploymentHistory> employmentHistory = new ArrayList<>();
 
-    // =========================================================
     // AUDIT TIMESTAMPS
-    // =========================================================
-
     @CreationTimestamp
     @Column(
             name = "created_at",
@@ -164,10 +155,7 @@ public class StaffProfile {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    // =========================================================
     // CONSTRUCTORS
-    // =========================================================
-
     public StaffProfile(
             String employeeNumber,
             StaffRole staffRole,
@@ -180,10 +168,7 @@ public class StaffProfile {
         this.employmentStatus = EmploymentStatus.PENDING;
     }
 
-    // =========================================================
     // FACTORY METHOD
-    // =========================================================
-
     public static StaffProfile create(
             BankUser user,
             String employeeNumber,
@@ -202,14 +187,10 @@ public class StaffProfile {
         return profile;
     }
 
-    // =========================================================
     // EMPLOYMENT HISTORY HELPERS
-    // =========================================================
-
     public void addEmploymentHistory(
             StaffEmploymentHistory history
     ) {
-
         if (history == null) {
             throw new IllegalArgumentException(
                     "Employment history cannot be null"

@@ -146,15 +146,12 @@ public class StaffIdentityService {
 
             /*
              * Create the initial employment-history record.
-             *
              * At provisioning time:
-             *
              * - No department has been assigned.
              * - No branch has been assigned.
              * - No job title has been assigned.
              * - No employment type has been specified.
              * - Employment status is PENDING.
-             *
              * I deliberately leave changedByUserId null here because
              * the provisioning service has not been given the authenticated
              * administrator's user ID.
