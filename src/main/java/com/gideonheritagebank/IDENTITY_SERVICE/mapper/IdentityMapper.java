@@ -3,6 +3,7 @@ package com.gideonheritagebank.IDENTITY_SERVICE.mapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.CustomerIdentityStatus;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.RoleName;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffIdentityStatus;
 import org.mapstruct.Mapper;
@@ -94,6 +95,18 @@ public interface IdentityMapper {
 
     StaffAddressResponse toStaffAddressResponse(UserAddress address);
 
+    @Mapping(target = "userId", source = "id")
+    @Mapping(target = "staffProfileId", source = "staffProfile.id")
+    @Mapping(target = "employeeNumber", source = "staffProfile.employeeNumber")
+    @Mapping(target = "employmentStatus", source = "staffProfile.employmentStatus")
+    @Mapping(target = "hireDate", source = "staffProfile.hireDate")
+    @Mapping(target = "employmentEndDate", source = "staffProfile.employmentEndDate")
+    @Mapping(
+            target = "identityStatus",
+            expression = "java(resolveStaffIdentityStatus(user))"
+    )
+    StaffLifecycleResponse toStaffLifecycleResponse(BankUser user);
+
     default StaffIdentityStatus resolveStaffIdentityStatus(BankUser user) {
 
         if (user.isIdentityClosed()) {
@@ -108,14 +121,14 @@ public interface IdentityMapper {
             return StaffIdentityStatus.LOCKED;
         }
 
-        /*
-         * A newly provisioned staff member has:
-         * enabled = false
-         * emailVerified = false
-         *
-         * They remain pending onboarding until they complete
-         * the invitation and password setup process.
-         */
+        if (user.getStaffProfile() != null
+                && user.getStaffProfile().getEmploymentStatus()
+                == EmploymentStatus.TERMINATED) {
+
+            return StaffIdentityStatus.DEACTIVATED;
+        }
+
+        /* Newly provisioned staff identities have not completed onboarding. */
         if (!user.isEnabled() && !user.isEmailVerified()) {
             return StaffIdentityStatus.PENDING_ONBOARDING;
         }

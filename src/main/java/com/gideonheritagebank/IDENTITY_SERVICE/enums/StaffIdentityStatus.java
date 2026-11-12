@@ -7,5 +7,6 @@ public enum StaffIdentityStatus {
     DISABLED,
     LOCKED,
     SUSPENDED,
+    DEACTIVATED,
     CLOSED
 }
