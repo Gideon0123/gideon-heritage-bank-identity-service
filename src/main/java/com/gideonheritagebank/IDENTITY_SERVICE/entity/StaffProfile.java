@@ -73,11 +73,7 @@ public class StaffProfile {
     private String employeeNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "staff_role",
-//            nullable = false,
-            length = 50
-    )
+    @Column(name = "staff_role", length = 50)
     private StaffRole staffRole;
 
     /*

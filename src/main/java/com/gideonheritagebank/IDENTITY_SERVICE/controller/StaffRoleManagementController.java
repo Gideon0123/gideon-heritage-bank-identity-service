@@ -125,7 +125,7 @@ public class StaffRoleManagementController {
     public ResponseEntity<ApiResponse<PagedResponse<StaffRoleHistoryResponse>>> getStaffRoleHistory(
             @PathVariable UUID staffUserId,
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "changedAt",
                     direction = Sort.Direction.DESC

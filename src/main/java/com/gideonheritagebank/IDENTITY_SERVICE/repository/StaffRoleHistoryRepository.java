@@ -13,4 +13,9 @@ public interface StaffRoleHistoryRepository extends JpaRepository<StaffRoleHisto
             UUID staffProfileId,
             Pageable pageable
     );
+
+    Page<StaffRoleHistory> findAllByStaffProfile_Id(
+            UUID staffProfileId,
+            Pageable pageable
+    );
 }

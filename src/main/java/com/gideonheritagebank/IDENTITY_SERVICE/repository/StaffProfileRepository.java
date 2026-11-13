@@ -12,8 +12,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StaffProfileRepository
-        extends JpaRepository<StaffProfile, UUID> {
+public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID> {
 
     Optional<StaffProfile> findByUser_Id(UUID userId);
 
