@@ -170,6 +170,20 @@ public final class StaffSpecification {
                             cb.isTrue(root.get("emailVerified"))
                     );
 
+            case DEACTIVATED ->
+                    cb.and(
+                            cb.isFalse(root.get("identityClosed")),
+                            cb.isFalse(root.get("suspended")),
+                            cb.isTrue(root.get("accountNonLocked")),
+                            cb.isTrue(root.get("enabled")),
+                            cb.isTrue(root.get("emailVerified")),
+                            cb.equal(
+                                    root.join("staffProfile", JoinType.INNER)
+                                            .get("employmentStatus"),
+                                    "TERMINATED"
+                            )
+                    );
+
             case PENDING_VERIFICATION ->
                     cb.and(
                             cb.isFalse(root.get("identityClosed")),
