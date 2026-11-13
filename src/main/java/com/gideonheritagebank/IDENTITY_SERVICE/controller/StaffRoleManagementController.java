@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -159,12 +158,6 @@ public class StaffRoleManagementController {
         } catch (IllegalArgumentException exception) {
             throw new BadRequest("Authenticated administrator identity is invalid.");
         }
-    }
-
-    private String resolveTraceId(String requestId) {
-
-        return requestId != null && !requestId.isBlank()
-                ? requestId : TraceIdUtil.generate();
     }
 
     private <T> ResponseEntity<ApiResponse<T>> success(

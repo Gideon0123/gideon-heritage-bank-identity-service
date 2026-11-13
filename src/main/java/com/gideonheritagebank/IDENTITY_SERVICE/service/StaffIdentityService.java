@@ -117,11 +117,14 @@ public class StaffIdentityService {
                 passwordHash
         );
 
+        if (request.getStaffRole() == StaffRole.ADMIN) {
+            throw new BadRequest("ADMIN cannot be assigned through ordinary staff provisioning.");
+        }
+
         staffUser.addRole(staffRole);
         staffUser.addRole(specificStaffRole);
 
         try {
-
             BankUser savedUser = bankUserRepository.saveAndFlush(staffUser);
 
             StaffProfile profile = StaffProfile.create(
