@@ -75,7 +75,7 @@ public class StaffProfile {
     @Enumerated(EnumType.STRING)
     @Column(
             name = "staff_role",
-            nullable = false,
+//            nullable = false,
             length = 50
     )
     private StaffRole staffRole;

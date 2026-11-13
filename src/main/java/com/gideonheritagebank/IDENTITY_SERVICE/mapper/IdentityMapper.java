@@ -107,6 +107,17 @@ public interface IdentityMapper {
     )
     StaffLifecycleResponse toStaffLifecycleResponse(BankUser user);
 
+    @Mapping(target = "staffUserId", source = "user.id")
+    @Mapping(target = "employeeNumber", source = "employeeNumber")
+    @Mapping(target = "staffRole", source = "staffRole")
+    @Mapping(target = "genericRole", constant = "STAFF")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    StaffRoleResponse toStaffRoleResponse(StaffProfile staffProfile);
+    
+    @Mapping(target = "staffUserId", source = "staffProfile.user.id")
+    @Mapping(target = "employeeNumber", source = "staffProfile.employeeNumber")
+    StaffRoleHistoryResponse toStaffRoleHistoryResponse(StaffRoleHistory history);
+
     default StaffIdentityStatus resolveStaffIdentityStatus(BankUser user) {
 
         if (user.isIdentityClosed()) {
