@@ -59,8 +59,7 @@ public class StaffProfileController {
             HttpServletRequest request
     ) {
 
-        StaffProfileResponse response =
-                staffProfileService.getStaffProfileByUserId(userId);
+        StaffProfileResponse response = staffProfileService.getStaffProfileByUserId(userId);
 
         return success(
                 "Staff profile retrieved successfully.",
@@ -82,12 +81,10 @@ public class StaffProfileController {
             @Valid @RequestBody UpdateStaffProfileRequest requestBody,
             HttpServletRequest request
     ) {
-
-        StaffProfileResponse response =
-                staffProfileService.updateStaffProfile(
-                        staffProfileId,
-                        requestBody
-                );
+        StaffProfileResponse response = staffProfileService.updateStaffProfile(
+                staffProfileId,
+                requestBody
+        );
 
         return success(
                 "Staff profile updated successfully.",

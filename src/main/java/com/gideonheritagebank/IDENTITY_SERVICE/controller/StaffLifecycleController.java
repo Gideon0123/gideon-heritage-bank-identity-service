@@ -36,8 +36,7 @@ public class StaffLifecycleController {
             @PathVariable UUID staffUserId,
             HttpServletRequest request
     ) {
-        StaffLifecycleResponse response =
-                staffLifecycleService.getStaffLifecycleStatus(staffUserId);
+        StaffLifecycleResponse response = staffLifecycleService.getStaffLifecycleStatus(staffUserId);
 
         return success(
                 "Staff lifecycle status retrieved successfully.",
