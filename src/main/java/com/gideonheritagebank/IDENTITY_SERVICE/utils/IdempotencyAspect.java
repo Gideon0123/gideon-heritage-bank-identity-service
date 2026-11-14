@@ -118,7 +118,6 @@ public class IdempotencyAspect {
         return !(argument instanceof HttpServletRequest)
                 && !(argument instanceof HttpServletResponse)
                 && !(argument instanceof BindingResult)
-                && !(argument instanceof Authentication)
                 && !(argument instanceof Jwt)
                 && !(argument instanceof Principal)
                 && !(argument instanceof Pageable);

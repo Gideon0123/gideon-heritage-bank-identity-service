@@ -10,5 +10,4 @@ public class IdempotencyResult {
     private boolean completed;
     private boolean proceed;
     private IdempotencyRecord record;
-
 }
