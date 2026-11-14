@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StaffOnboardingTokenRepository
-        extends JpaRepository<StaffOnboardingToken, UUID> {
+public interface StaffOnboardingTokenRepository extends JpaRepository<StaffOnboardingToken, UUID> {
 
     Optional<StaffOnboardingToken> findByTokenHash(String tokenHash);
 

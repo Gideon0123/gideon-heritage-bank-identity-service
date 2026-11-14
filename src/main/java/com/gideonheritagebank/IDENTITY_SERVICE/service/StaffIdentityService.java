@@ -92,6 +92,10 @@ public class StaffIdentityService {
 
         Role staffRole = findRequiredRole(RoleName.STAFF);
 
+        if (request.getStaffRole() == StaffRole.ADMIN) {
+            throw new BadRequest("ADMIN cannot be assigned through ordinary staff provisioning.");
+        }
+
         RoleName specificRoleName = mapStaffRoleToRoleName(
                 request.getStaffRole()
         );
@@ -116,10 +120,6 @@ public class StaffIdentityService {
                 phoneNumber,
                 passwordHash
         );
-
-        if (request.getStaffRole() == StaffRole.ADMIN) {
-            throw new BadRequest("ADMIN cannot be assigned through ordinary staff provisioning.");
-        }
 
         staffUser.addRole(staffRole);
         staffUser.addRole(specificStaffRole);
