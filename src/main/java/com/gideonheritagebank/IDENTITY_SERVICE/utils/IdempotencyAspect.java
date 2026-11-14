@@ -3,6 +3,8 @@ package com.gideonheritagebank.IDENTITY_SERVICE.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.IdempotencyResult;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.RequestFingerprint;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.MissingIdempotencyKeyException;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CurrentUserService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.IdempotencyService;
 import jakarta.servlet.http.HttpServletRequest;

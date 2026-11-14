@@ -1,6 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.repository;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.IdempotencyRecord;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.IdempotencyKeyUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;

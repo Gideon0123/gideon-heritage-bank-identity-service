@@ -2,7 +2,13 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.IdempotencyRecord;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.IdempotencyResult;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.RequestFingerprint;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.IdempotencyState;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.IdempotencyStatus;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyConflictException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyProcessingException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.IdempotencyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
