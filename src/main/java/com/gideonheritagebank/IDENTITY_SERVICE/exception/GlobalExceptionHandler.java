@@ -171,6 +171,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(MissingIdempotencyKeyException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingIdempotencyKey(
+            MissingIdempotencyKeyException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.NOT_FOUND,
+                "Missing idempotency key: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
     @ExceptionHandler(IdempotencyConflictException.class)
     public ResponseEntity<ApiResponse<Void>> handleIdempotencyConflict(
             IdempotencyConflictException exception,
