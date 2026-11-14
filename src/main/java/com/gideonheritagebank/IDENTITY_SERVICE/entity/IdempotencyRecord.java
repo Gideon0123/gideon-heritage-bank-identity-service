@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.entity;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.IdempotencyStatus;
 import lombok.*;
 import org.springframework.http.MediaType;
 
