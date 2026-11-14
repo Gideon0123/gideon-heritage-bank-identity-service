@@ -10,16 +10,21 @@ import com.gideonheritagebank.IDENTITY_SERVICE.enums.IdempotencyStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyProcessingException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.IdempotencyRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.utils.IdempotencyProperties;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.IdempotencyStateResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -27,142 +32,174 @@ public class IdempotencyService {
 
     private final IdempotencyRepository repository;
     private final FingerprintService fingerprintService;
-    private final IdempotencyProperties properties;
     private final ObjectMapper objectMapper;
     private final IdempotencyStateResolver stateResolver;
 
     public IdempotencyResult begin(
             String idempotencyKey,
             RequestFingerprint fingerprint,
-            long ttl
+            Duration ttl
     ) {
-        Long userId = fingerprint.getUserId();
+        if (fingerprint == null || fingerprint.getUserId() == null) {
+            throw new IllegalArgumentException("Authenticated user is required for idempotency.");
+        }
+        validateTtl(ttl);
 
+        UUID userId = fingerprint.getUserId();
         String fingerprintHash = fingerprintService.generate(fingerprint);
+        UUID processingToken = UUID.randomUUID();
+        Instant now = Instant.now();
 
-        Optional<IdempotencyRecord> existing = repository.find(
-                userId,
-                idempotencyKey
-        );
+        IdempotencyRecord processingRecord = IdempotencyRecord.builder()
+                .userId(userId)
+                .key(idempotencyKey)
+                .fingerprint(fingerprintHash)
+                .processingToken(processingToken)
+                .status(IdempotencyStatus.PROCESSING)
+                .createdAt(now)
+                .expiresAt(now.plus(ttl))
+                .build();
 
-        IdempotencyState state = stateResolver.resolve(
-                existing,
-                fingerprintHash
-        );
+        if (repository.createIfAbsent(userId, idempotencyKey, processingRecord, ttl)) {
+            return IdempotencyResult.builder()
+                    .proceed(true)
+                    .record(processingRecord)
+                    .build();
+        }
 
-        return switch (state) {
+        Optional<IdempotencyRecord> existing = repository.find(userId, idempotencyKey);
 
-            case NOT_FOUND -> {
-                createProcessingRecord(
-                        userId,
-                        idempotencyKey,
-                        fingerprintHash,
-                        ttl
-                );
-                yield IdempotencyResult.builder()
+        // The key may have expired between SET-NX and GET. Retry creation once.
+        if (existing.isEmpty()) {
+            if (repository.createIfAbsent(userId, idempotencyKey, processingRecord, ttl)) {
+                return IdempotencyResult.builder()
                         .proceed(true)
+                        .record(processingRecord)
                         .build();
             }
+            existing = repository.find(userId, idempotencyKey);
+        }
 
+        IdempotencyState state = stateResolver.resolve(existing, fingerprintHash);
+        return switch (state) {
+            case NOT_FOUND -> throw new IdempotencyProcessingException(
+                    "The idempotency record changed while the request was being initialized. Retry with the same key."
+            );
             case PROCESSING -> throw new IdempotencyProcessingException(
-                    "Request already processing."
+                    "A request using this idempotency key is already being processed."
             );
-
             case FINGERPRINT_MISMATCH -> throw new IdempotencyConflictException(
-                    "Idempotency-Key already used with another request."
+                    "This Idempotency-Key has already been used with a different request."
             );
-
-            case COMPLETED ->
-                    IdempotencyResult.builder()
-                            .completed(true)
-                            .record(existing.get())
-                            .build();
+            case COMPLETED -> IdempotencyResult.builder()
+                    .completed(true)
+                    .record(existing.orElseThrow())
+                    .build();
         };
-
-    }
-
-    public String getCachedResponse(
-            Long userId,
-            String key
-    ) {
-        return repository.find(userId, key)
-                .orElseThrow()
-                .getResponseBody();
     }
 
     public void complete(
-            Long userId,
+            UUID userId,
             String key,
+            UUID processingToken,
             Object response,
-            long ttl
+            Duration ttl
     ) throws JsonProcessingException {
-
         IdempotencyRecord record = repository.find(userId, key)
-                .orElseThrow();
+                .orElseThrow(() -> new IdempotencyProcessingException(
+                        "The idempotency reservation expired before completion."
+                ));
 
-        ResponseEntity<?> entity = (ResponseEntity<?>) response;
+        if (!processingToken.equals(record.getProcessingToken())) {
+            throw new IdempotencyProcessingException(
+                    "This request no longer owns the idempotency reservation."
+            );
+        }
+
+        if (!(response instanceof ResponseEntity<?> responseEntity)) {
+            throw new IllegalStateException(
+                    "Methods annotated with @Idempotent must return ResponseEntity<?>."
+            );
+        }
+
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            fail(userId, key, processingToken);
+            return;
+        }
+
         record.setStatus(IdempotencyStatus.COMPLETED);
-        record.setHttpStatus(entity.getStatusCode().value());
-        record.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        record.setResponseBody(
-                objectMapper.writeValueAsString(
-                        entity.getBody()
-                )
-        );
-        record.setCompletedAt(LocalDateTime.now());
+        record.setHttpStatus(responseEntity.getStatusCode().value());
+        MediaType contentType = responseEntity.getHeaders().getContentType();
+        record.setContentType(contentType == null
+                ? MediaType.APPLICATION_JSON_VALUE
+                : contentType.toString());
+        record.setResponseBody(responseEntity.getBody() == null
+                ? null
+                : objectMapper.writeValueAsString(responseEntity.getBody()));
+        record.setResponseHeaders(extractReplayableHeaders(responseEntity.getHeaders()));
+        record.setCompletedAt(Instant.now());
+        record.setExpiresAt(Instant.now().plus(ttl));
 
-        repository.save(
-                userId,
-                key,
-                record,
-                Duration.ofMinutes(ttl)
+        boolean updated = repository.completeIfOwner(
+                userId, key, processingToken, record, ttl
         );
+        if (!updated) {
+            throw new IdempotencyProcessingException(
+                    "The idempotency reservation expired or was replaced before completion."
+            );
+        }
     }
 
-    public void fail(
-            Long userId,
-            String key
-    ) {
-        repository.delete(
-                userId,
-                key
-        );
+    public void fail(UUID userId, String key, UUID processingToken) {
+        repository.deleteIfOwner(userId, key, processingToken);
     }
 
-    public ResponseEntity<String> buildCachedResponse(
-            Long userId,
-            String key
-    ) {
+    public ResponseEntity<String> buildCachedResponse(IdempotencyRecord record) {
+        if (record == null
+                || record.getStatus() != IdempotencyStatus.COMPLETED
+                || record.getHttpStatus() == null) {
+            throw new IdempotencyProcessingException(
+                    "The completed idempotency response is unavailable."
+            );
+        }
 
-        IdempotencyRecord record = repository.find(userId, key).orElseThrow();
+        MediaType contentType;
+        try {
+            contentType = MediaType.parseMediaType(record.getContentType());
+        } catch (Exception exception) {
+            contentType = MediaType.APPLICATION_JSON;
+        }
 
-        return ResponseEntity
-                .status(record.getHttpStatus())
-                .contentType(MediaType.parseMediaType(record.getContentType()))
-                .body(record.getResponseBody());
-    }
+        HttpHeaders headers = new HttpHeaders();
+        if (record.getResponseHeaders() != null) {
+            record.getResponseHeaders().forEach(headers::put);
+        }
+        headers.setContentType(contentType);
 
-    private void createProcessingRecord(
-            Long userId,
-            String key,
-            String fingerprint,
-            long ttl
-    ) {
-        IdempotencyRecord record = IdempotencyRecord.builder()
-                .userId(userId)
-                .key(key)
-                .fingerprint(fingerprint)
-                .status(IdempotencyStatus.PROCESSING)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(ttl))
-                .build();
-
-        repository.save(
-                userId,
-                key,
-                record,
-                Duration.ofMinutes(ttl)
+        return new ResponseEntity<>(
+                record.getResponseBody(),
+                headers,
+                HttpStatusCode.valueOf(record.getHttpStatus())
         );
     }
 
+    private Map<String, List<String>> extractReplayableHeaders(HttpHeaders source) {
+        Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        source.forEach((name, values) -> {
+            if (!name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH)
+                    && !name.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING)
+                    && !name.equalsIgnoreCase(HttpHeaders.CONNECTION)
+                    && !name.equalsIgnoreCase(HttpHeaders.DATE)
+                    && !name.equalsIgnoreCase(HttpHeaders.SET_COOKIE)) {
+                headers.put(name, List.copyOf(values));
+            }
+        });
+        return headers;
+    }
+
+    private void validateTtl(Duration ttl) {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("Idempotency TTL must be greater than zero.");
+        }
+    }
 }
