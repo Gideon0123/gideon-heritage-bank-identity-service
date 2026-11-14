@@ -158,6 +158,32 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IdempotencyProcessingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIdempotencyProcessing(
+            IdempotencyProcessingException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Idempotency processing error: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIdempotencyConflict(
+            IdempotencyConflictException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.CONFLICT,
+                "Idempotency conflict: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
             ResourceNotFoundException exception,
