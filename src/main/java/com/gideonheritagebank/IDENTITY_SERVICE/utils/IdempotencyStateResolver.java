@@ -19,8 +19,8 @@ public class IdempotencyStateResolver {
         }
 
         IdempotencyRecord existing = record.get();
-
-        if (!existing.getFingerprint().equals(fingerprint)) {
+        if (existing.getFingerprint() == null
+                || !existing.getFingerprint().equals(fingerprint)) {
             return IdempotencyState.FINGERPRINT_MISMATCH;
         }
 
@@ -28,7 +28,10 @@ public class IdempotencyStateResolver {
             return IdempotencyState.PROCESSING;
         }
 
-        return IdempotencyState.COMPLETED;
-    }
+        if (existing.getStatus() == IdempotencyStatus.COMPLETED) {
+            return IdempotencyState.COMPLETED;
+        }
 
+        return IdempotencyState.NOT_FOUND;
+    }
 }

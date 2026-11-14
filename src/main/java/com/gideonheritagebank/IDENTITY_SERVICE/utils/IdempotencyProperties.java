@@ -11,6 +11,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "idempotency")
 public class IdempotencyProperties {
 
+    /** Default retention period when an annotation does not specify a TTL. */
     private long expirationMinutes = 20;
-
 }

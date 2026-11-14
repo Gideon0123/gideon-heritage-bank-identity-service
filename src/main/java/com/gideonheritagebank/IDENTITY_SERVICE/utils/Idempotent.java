@@ -7,6 +7,9 @@ import java.lang.annotation.*;
 @Documented
 public @interface Idempotent {
 
-    long ttlMinutes() default 30;
-
+    /**
+     * TTL in minutes. A value less than or equal to zero uses the configured
+     * idempotency.expiration-minutes default.
+     */
+    long ttlMinutes() default 0;
 }
