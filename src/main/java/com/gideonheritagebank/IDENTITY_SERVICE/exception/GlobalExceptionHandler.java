@@ -79,6 +79,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            AccessDeniedException exception,
+            HttpServletRequest request
+    ) {
+        return errorResponse(
+                HttpStatus.FORBIDDEN,
+                "Access denied: " + exception.getMessage(),
+                Map.of(),
+                request
+        );
+    }
+
     @ExceptionHandler(BadRequest.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(
             BadRequest exception,
