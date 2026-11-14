@@ -10,6 +10,8 @@ import com.gideonheritagebank.IDENTITY_SERVICE.enums.IdempotencyStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdempotencyProcessingException;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.IdempotencyRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.IdempotencyProperties;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.IdempotencyStateResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -132,15 +134,11 @@ public class IdempotencyService {
             String key
     ) {
 
-        IdempotencyRecord record = repository.find(userId, key)
-                .orElseThrow();
+        IdempotencyRecord record = repository.find(userId, key).orElseThrow();
 
         return ResponseEntity
                 .status(record.getHttpStatus())
-                .contentType(MediaType.parseMediaType(
-                                record.getContentType()
-                        )
-                )
+                .contentType(MediaType.parseMediaType(record.getContentType()))
                 .body(record.getResponseBody());
     }
 
@@ -156,12 +154,7 @@ public class IdempotencyService {
                 .fingerprint(fingerprint)
                 .status(IdempotencyStatus.PROCESSING)
                 .createdAt(LocalDateTime.now())
-                .expiresAt(
-                        LocalDateTime.now()
-                                .plusMinutes(
-                                        ttl
-                                )
-                )
+                .expiresAt(LocalDateTime.now().plusMinutes(ttl))
                 .build();
 
         repository.save(
