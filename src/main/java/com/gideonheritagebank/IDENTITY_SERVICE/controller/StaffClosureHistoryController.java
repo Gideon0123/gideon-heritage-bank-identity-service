@@ -31,7 +31,7 @@ public class StaffClosureHistoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<StaffClosureHistoryResponse>>> getStaffClosureHistory(
             @PageableDefault(
-                    page = 0,
+                    page = 1,
                     size = 20,
                     sort = "closedAt",
                     direction = Sort.Direction.DESC

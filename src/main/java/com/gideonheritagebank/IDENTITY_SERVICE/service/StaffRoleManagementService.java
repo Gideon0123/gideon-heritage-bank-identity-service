@@ -63,11 +63,9 @@ public class StaffRoleManagementService {
             UUID staffUserId,
             Pageable pageable
     ) {
-
         StaffProfile staffProfile = findStaffProfile(staffUserId);
 
-        Pageable validatedPageable =
-                validateAndBuildPageable(pageable);
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
 
         return staffRoleHistoryRepository.findAllByStaffProfile_Id(
                         staffProfile.getId(),

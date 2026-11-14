@@ -17,7 +17,9 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffClosureHistoryRep
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -38,6 +41,8 @@ public class StaffLifecycleService {
     private final StaffClosureHistoryRepository staffClosureHistoryRepository;
     private final StaffProfileRepository staffProfileRepository;
     private final IdentityMapper identityMapper;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("closedAt");
 
     /* GET STAFF LIFECYCLE STATUS */
 
@@ -425,8 +430,9 @@ public class StaffLifecycleService {
     public Page<StaffClosureHistoryResponse> getStaffClosureHistory(
             Pageable pageable
     ) {
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
         Page<StaffClosureHistory> historyPage =
-                staffClosureHistoryRepository.findAllByOrderByClosedAtDesc(pageable);
+                staffClosureHistoryRepository.findAllByOrderByClosedAtDesc(validatedPageable);
 
         return historyPage.map(
                 identityMapper::toStaffClosureHistoryResponse
@@ -541,5 +547,58 @@ public class StaffLifecycleService {
         if (changed) {
             refreshTokenRepository.saveAllAndFlush(refreshTokens);
         }
+    }
+
+    private Pageable validateAndBuildPageable(Pageable pageable) {
+
+        int pageNumber = Math.max(pageable.getPageNumber() - 1, 0);
+
+        int pageSize = Math.min(
+                pageable.getPageSize(),
+                MAX_PAGE_SIZE
+        );
+
+        if (pageSize < 1) {
+            pageSize = 20;
+        }
+
+        Sort sort = validateSort(pageable.getSort());
+
+        return PageRequest.of(
+                pageNumber,
+                pageSize,
+                sort
+        );
+    }
+
+    private Sort validateSort(Sort requestedSort) {
+
+        if (requestedSort.isUnsorted()) {
+            return Sort.by(
+                    Sort.Order.desc("changedAt"),
+                    Sort.Order.desc("id")
+            );
+        }
+
+        for (Sort.Order order : requestedSort) {
+
+            if (!ALLOWED_SORT_FIELDS.contains(order.getProperty())) {
+
+                throw new BusinessException(
+                        "Sorting by '" + order.getProperty()
+                                + "' is not supported."
+                );
+            }
+        }
+
+        Sort validatedSort = requestedSort;
+
+        if (requestedSort.getOrderFor("id") == null) {
+            validatedSort = validatedSort.and(
+                    Sort.by(Sort.Order.desc("id"))
+            );
+        }
+
+        return validatedSort;
     }
 }
