@@ -1,23 +1,23 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CloseStaffRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.DeactivateStaffRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.LockStaffRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.SuspendStaffRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffEmploymentRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.*;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffClosureHistoryResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffLifecycleResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.RefreshToken;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffClosureHistory;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
-import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RefreshTokenRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffClosureHistoryRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +35,8 @@ public class StaffLifecycleService {
     private final BankUserRepository bankUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final StaffEmploymentService staffEmploymentService;
+    private final StaffClosureHistoryRepository staffClosureHistoryRepository;
+    private final StaffProfileRepository staffProfileRepository;
     private final IdentityMapper identityMapper;
 
     /* GET STAFF LIFECYCLE STATUS */
@@ -310,48 +312,127 @@ public class StaffLifecycleService {
      * The staff member must already have terminated employment.
      */
 
+
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse closeStaff(
             UUID staffUserId,
-            CloseStaffRequest request
+            CloseStaffRequest request,
+            UUID adminUserId
     ) {
+
         if (request == null) {
-            throw new BadRequest("Closure request is required");
+            throw new BadRequest("Staff closure request is required.");
         }
 
-        if (request.reason() == null || request.reason().isBlank()) {
-            throw new BadRequest("Closure reason is required");
-        }
-
-        if (request.retentionReviewAt() == null
-                || !request.retentionReviewAt().isAfter(Instant.now())) {
-
-            throw new BadRequest("Retention review date must be in the future");
-        }
-
-        BankUser staff = getStaffForUpdate(staffUserId);
-        ensureIdentityNotClosed(staff);
-        StaffProfile profile = getStaffProfile(staff);
-
-        if (profile.getEmploymentStatus() != EmploymentStatus.TERMINATED) {
-            throw new BadRequest(
-                    "Staff employment must be terminated before identity closure"
+        if (adminUserId == null) {
+            throw new BusinessException(
+                    "The administrator performing this closure could not be identified."
             );
         }
 
-        /* Close the identity without deleting its database records. */
-        staff.closeIdentity(
-                request.reason().trim(),
-                request.retentionReviewAt()
+        String reason = request.reason().trim();
+
+        if (reason.isBlank()) {
+            throw new BadRequest("A closure reason is required.");
+        }
+
+        if (reason.length() > 1000) {
+            throw new BadRequest(
+                    "Closure reason cannot exceed 1000 characters."
+            );
+        }
+
+        Instant retentionReviewAt = request.retentionReviewAt();
+
+        if (retentionReviewAt == null
+                || !retentionReviewAt.isAfter(Instant.now())) {
+            throw new BadRequest(
+                    "Retention review date must be in the future."
+            );
+        }
+
+        // 1. Lock the identity first.
+        BankUser user = bankUserRepository.findByIdForUpdate(staffUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Staff identity not found."
+                ));
+
+        if (user.getUserType() != UserType.STAFF) {
+            throw new ConflictException(
+                    "Only staff identities can be closed through this operation."
+            );
+        }
+
+        if (user.isIdentityClosed()) {
+            throw new ConflictException(
+                    "This staff identity has already been closed."
+            );
+        }
+
+        // 2. Lock the staff profile.
+        StaffProfile profile = staffProfileRepository
+                .findByUserIdForUpdate(staffUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Staff profile not found."
+                ));
+
+        if (profile.getEmploymentStatus() != EmploymentStatus.TERMINATED) {
+            throw new ConflictException(
+                    "Staff employment must be terminated before identity closure."
+            );
+        }
+
+        // 3. Prevent duplicate closure-history records.
+        if (staffClosureHistoryRepository.existsByUserId(staffUserId)) {
+            throw new ConflictException(
+                    "A closure history record already exists for this staff identity."
+            );
+        }
+
+        Instant closedAt = Instant.now();
+
+        // 4. Capture the final staff details for historical purposes.
+        StaffClosureHistory closureHistory = new StaffClosureHistory(
+                profile,
+                user.getId(),
+                profile.getEmployeeNumber(),
+                profile.getStaffRole(),
+                reason,
+                adminUserId,
+                closedAt,
+                retentionReviewAt
         );
 
-        /* Defensive session revocation. */
-        revokeAllRefreshTokens(staff.getId());
-        bankUserRepository.saveAndFlush(staff);
+        staffClosureHistoryRepository.save(closureHistory);
 
-        return identityMapper.toStaffLifecycleResponse(staff);
+        // 5. Close the identity.
+        user.closeIdentity(reason, retentionReviewAt);
+
+        // 6. Revoke outstanding refresh tokens.
+        revokeAllRefreshTokens(staffUserId);
+
+        // 7. Persist the updated identity.
+        BankUser savedUser = bankUserRepository.saveAndFlush(user);
+
+        // 8. Return the mapped response.
+        return identityMapper.toStaffLifecycleResponse(savedUser);
     }
+
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<StaffClosureHistoryResponse> getStaffClosureHistory(
+            Pageable pageable
+    ) {
+        Page<StaffClosureHistory> historyPage =
+                staffClosureHistoryRepository.findAllByOrderByClosedAtDesc(pageable);
+
+        return historyPage.map(
+                identityMapper::toStaffClosureHistoryResponse
+        );
+    }
+
 
     /* FIND STAFF IDENTITY */
     private BankUser findStaff(UUID staffUserId) {

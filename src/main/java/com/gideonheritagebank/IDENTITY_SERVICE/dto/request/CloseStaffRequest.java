@@ -18,4 +18,5 @@ public record CloseStaffRequest(
         Instant retentionReviewAt
 
 ) {
+
 }

@@ -179,11 +179,15 @@ public class StaffLifecycleController {
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> closeStaff(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody CloseStaffRequest requestBody,
+            @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest request
     ) {
+        UUID adminUserId = getAuthenticatedUserId(jwt);
+
         StaffLifecycleResponse response = staffLifecycleService.closeStaff(
                 staffUserId,
-                requestBody
+                requestBody,
+                adminUserId
         );
 
         return success(

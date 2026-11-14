@@ -134,6 +134,11 @@ public interface IdentityMapper {
             CustomerStaffConversion conversion
     );
 
+    @Mapping(target = "staffProfileId", source = "staffProfile.id")
+    StaffClosureHistoryResponse toStaffClosureHistoryResponse(
+            StaffClosureHistory history
+    );
+
     default StaffIdentityStatus resolveStaffIdentityStatus(BankUser user) {
 
         if (user.isIdentityClosed()) {

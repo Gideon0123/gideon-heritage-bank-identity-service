@@ -29,8 +29,7 @@ public class CustomerStaffConversionController {
     private final CustomerStaffConversionService conversionService;
 
     @PostMapping("/{customerUserId}/convert-to-staff")
-    public ResponseEntity<ApiResponse<CustomerStaffConversionResponse>>
-    convertCustomerToStaff(
+    public ResponseEntity<ApiResponse<CustomerStaffConversionResponse>> convertCustomerToStaff(
             @PathVariable UUID customerUserId,
             @Valid @RequestBody ConvertCustomerToStaffRequest staffRequest,
             @AuthenticationPrincipal Jwt jwt,
