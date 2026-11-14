@@ -44,7 +44,7 @@ public class CustomerStaffConversion {
     @UuidGenerator
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
             nullable = false,

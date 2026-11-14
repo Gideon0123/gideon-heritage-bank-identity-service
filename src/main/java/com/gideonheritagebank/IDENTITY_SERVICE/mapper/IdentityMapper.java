@@ -118,6 +118,22 @@ public interface IdentityMapper {
     @Mapping(target = "employeeNumber", source = "staffProfile.employeeNumber")
     StaffRoleHistoryResponse toStaffRoleHistoryResponse(StaffRoleHistory history);
 
+    @Mapping(target = "conversionId", source = "id")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "phoneNumber", source = "user.phoneNumber")
+    @Mapping(target = "enabled", source = "user.enabled")
+    @Mapping(target = "emailVerified", source = "user.emailVerified")
+    @Mapping(target = "employeeNumber", source = "user.staffProfile.employeeNumber")
+    @Mapping(target = "assignedStaffRole", source = "user.staffProfile.staffRole")
+    @Mapping(target = "employmentStatus", source = "user.staffProfile.employmentStatus")
+    @Mapping(target = "conversionReason", source = "conversionReason")
+    CustomerStaffConversionResponse toCustomerStaffConversionResponse(
+            CustomerStaffConversion conversion
+    );
+
     default StaffIdentityStatus resolveStaffIdentityStatus(BankUser user) {
 
         if (user.isIdentityClosed()) {
