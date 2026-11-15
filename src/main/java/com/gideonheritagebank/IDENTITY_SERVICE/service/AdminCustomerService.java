@@ -22,6 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+import com.gideonheritagebank.IDENTITY_SERVICE.storage.ProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class AdminCustomerService {
 
     private final BankUserRepository bankUserRepository;
     private final IdentityMapper identityMapper;
+    private final ProfileImageUrlResolver profileImageUrlResolver;
     private static final int MAX_PAGE_SIZE = 100;
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "firstName",
@@ -52,8 +58,11 @@ public class AdminCustomerService {
                 validatedPageable
         );
 
-        return customers.map(identityMapper::toCustomerProfileResponse);
+        return customers
+                .map(identityMapper::toCustomerProfileResponse)
+                .map(profileImageUrlResolver::resolve);
     }
+    @Cacheable(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)")
 
     @Transactional(readOnly = true)
     public CustomerProfileResponse getCustomerById(UUID customerId) {
@@ -64,7 +73,9 @@ public class AdminCustomerService {
                         "Customer identity was not found"
                 ));
 
-        return identityMapper.toCustomerProfileResponse(customer);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toCustomerProfileResponse(customer)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -79,8 +90,11 @@ public class AdminCustomerService {
                 validatedPageable
         );
 
-        return customers.map(identityMapper::toCustomerProfileResponse);
+        return customers
+                .map(identityMapper::toCustomerProfileResponse)
+                .map(profileImageUrlResolver::resolve);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse updateCustomerByStaff(
@@ -105,15 +119,17 @@ public class AdminCustomerService {
         customer.setLastName(lastName);
         customer.setPhoneNumber(phoneNumber);
 
-        String photoUrl = request.profilePhotoUrl();
-
-        customer.setProfilePhotoUrl(
-                photoUrl == null || photoUrl.isBlank() ? null : photoUrl.trim()
-        );
+        if (request.profilePhotoUrl() != null) {
+            throw new BadRequest(
+                    "Profile images must be uploaded through POST /api/v1/identity/profile-image."
+            );
+        }
 
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toCustomerProfileResponse(savedCustomer);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toCustomerProfileResponse(savedCustomer)
+        );
     }
 
     private @NonNull String getPhoneNumber(

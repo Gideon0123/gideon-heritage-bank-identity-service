@@ -84,6 +84,11 @@ public class BankUser {
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
+    /**
+     * Object-storage key for the private profile image (for example,
+     * profile-images/{userId}/{uuid}.jpg). This is not the image binary
+     * and must not be an expiring presigned URL.
+     */
     @Column(name = "profile_photo_url", length = 1000)
     private String profilePhotoUrl;
 
