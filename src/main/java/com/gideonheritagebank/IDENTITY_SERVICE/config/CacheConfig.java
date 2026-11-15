@@ -66,7 +66,7 @@ public class CacheConfig {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
         cacheConfigurations.put(CacheNames.CUSTOMER_PROFILE,
-                redisCacheConfiguration.entryTtl(Duration.ofMinutes(10)));
+                redisCacheConfiguration.entryTtl(Duration.ofMinutes(5)));
         cacheConfigurations.put(CacheNames.CUSTOMER_ADDRESSES,
                 redisCacheConfiguration.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put(CacheNames.CUSTOMER_STATUS,
@@ -75,7 +75,13 @@ public class CacheConfig {
                 redisCacheConfiguration.entryTtl(Duration.ofMinutes(2)));
 
         cacheConfigurations.put(CacheNames.STAFF_PROFILE,
-                redisCacheConfiguration.entryTtl(Duration.ofMinutes(10)));
+                redisCacheConfiguration.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigurations.put(CacheNames.STAFF_STATUS,
+                redisCacheConfiguration.entryTtl(Duration.ofMinutes(2)));
+        cacheConfigurations.put(CacheNames.STAFF_CLOSURE_HISTORY,
+                redisCacheConfiguration.entryTtl(Duration.ofMinutes(2)));
+        cacheConfigurations.put(CacheNames.STAFF_DIRECTORY,
+                redisCacheConfiguration.entryTtl(Duration.ofMinutes(2)));
         cacheConfigurations.put(CacheNames.STAFF_ADDRESSES,
                 redisCacheConfiguration.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put(CacheNames.STAFF_EMPLOYMENT,

@@ -1,6 +1,5 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.config;
 
-import com.gideonheritagebank.IDENTITY_SERVICE.component.SecurityApiErrorHandler;
 import jakarta.servlet.http.Cookie;
 
 import org.springframework.beans.factory.annotation.Value;

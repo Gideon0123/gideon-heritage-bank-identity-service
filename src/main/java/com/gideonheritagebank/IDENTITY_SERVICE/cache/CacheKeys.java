@@ -28,6 +28,14 @@ public final class CacheKeys {
         return "staff:" + requireId(staffUserId);
     }
 
+    public static String staffStatus(UUID staffUserId) {
+        return "staff:" + requireId(staffUserId) + ":status";
+    }
+
+    public static String staffDirectory(UUID staffUserId) {
+        return "staff-directory:" + requireId(staffUserId);
+    }
+
     public static String staffAddresses(UUID staffUserId) {
         return "staff:" + requireId(staffUserId) + ":addresses";
     }

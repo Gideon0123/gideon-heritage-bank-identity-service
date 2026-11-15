@@ -12,6 +12,9 @@ public final class CacheNames {
     public static final String CUSTOMER_SEARCH = "customer-search";
 
     public static final String STAFF_PROFILE = "staff-profile";
+    public static final String STAFF_STATUS = "staff-status";
+    public static final String STAFF_CLOSURE_HISTORY = "staff-closure-history";
+    public static final String STAFF_DIRECTORY = "staff-directory";
     public static final String STAFF_ADDRESSES = "staff-addresses";
     public static final String STAFF_EMPLOYMENT = "staff-employment";
     public static final String STAFF_ROLE = "staff-role";
