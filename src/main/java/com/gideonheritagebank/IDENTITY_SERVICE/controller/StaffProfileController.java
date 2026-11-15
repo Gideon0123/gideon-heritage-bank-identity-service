@@ -4,6 +4,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffProfileReq
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffProfileService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,12 +25,7 @@ public class StaffProfileController {
 
     private final StaffProfileService staffProfileService;
 
-    /*
-     * ============================================================
-     * RETRIEVE STAFF PROFILE BY PROFILE ID
-     * ============================================================
-     */
-
+    /* RETRIEVE STAFF PROFILE BY PROFILE ID */
     @GetMapping("/{staffProfileId}")
     public ResponseEntity<ApiResponse<StaffProfileResponse>> getStaffProfileById(
             @PathVariable UUID staffProfileId,
@@ -47,18 +43,12 @@ public class StaffProfileController {
         );
     }
 
-    /*
-     * ============================================================
-     * RETRIEVE STAFF PROFILE BY USER ID
-     * ============================================================
-     */
-
+    /* RETRIEVE STAFF PROFILE BY USER ID */
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<StaffProfileResponse>> getStaffProfileByUserId(
             @PathVariable UUID userId,
             HttpServletRequest request
     ) {
-
         StaffProfileResponse response = staffProfileService.getStaffProfileByUserId(userId);
 
         return success(
@@ -69,13 +59,9 @@ public class StaffProfileController {
         );
     }
 
-    /*
-     * ============================================================
-     * UPDATE STAFF PROFILE
-     * ============================================================
-     */
-
+    /* UPDATE STAFF PROFILE */
     @PatchMapping("/{staffProfileId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffProfileResponse>> updateStaffProfile(
             @PathVariable UUID staffProfileId,
             @Valid @RequestBody UpdateStaffProfileRequest requestBody,
@@ -94,19 +80,13 @@ public class StaffProfileController {
         );
     }
 
-    /*
-     * ============================================================
-     * COMMON HELPER
-     * ============================================================
-     */
-
+    /* COMMON HELPER */
     private <T> ResponseEntity<ApiResponse<T>> success(
             String message,
             T data,
             HttpStatus status,
             HttpServletRequest request
     ) {
-
         String requestId = request.getHeader("X-Request-Id");
 
         if (requestId == null || requestId.isBlank()) {

@@ -8,6 +8,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerAddressRespo
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerAddressService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerProfileService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,10 +30,7 @@ public class CustomerController {
     private final CustomerProfileService customerProfileService;
     private final CustomerAddressService customerAddressService;
 
-    // =========================
     // CUSTOMER PROFILE
-    // =========================
-
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> getMyProfile(
             @AuthenticationPrincipal Jwt jwt,
@@ -55,6 +53,7 @@ public class CustomerController {
     }
 
     @PatchMapping("/me")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMyProfile(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UpdateCustomerProfileRequest request,
@@ -78,10 +77,7 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // =========================
     // CUSTOMER ADDRESSES
-    // =========================
-
     @GetMapping("/me/addresses")
     public ResponseEntity<ApiResponse<List<CustomerAddressResponse>>> getMyAddresses(
             @AuthenticationPrincipal Jwt jwt,
@@ -106,6 +102,7 @@ public class CustomerController {
     }
 
     @PostMapping("/me/addresses")
+    @Idempotent(ttlMinutes = 2)
     public ResponseEntity<ApiResponse<CustomerAddressResponse>> addAddress(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateCustomerAddressRequest request,
@@ -130,6 +127,7 @@ public class CustomerController {
     }
 
     @PatchMapping("/me/addresses/{addressId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerAddressResponse>> updateAddress(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
@@ -158,6 +156,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/me/addresses/{addressId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
@@ -181,6 +180,7 @@ public class CustomerController {
     }
 
     @PatchMapping("/me/addresses/{addressId}/primary")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerAddressResponse>> makePrimary(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID addressId,
@@ -204,10 +204,7 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
-    // =========================
     // COMMON HELPERS
-    // =========================
-
     private UUID getAuthenticatedUserId(Jwt jwt) {
 
         if (jwt == null || jwt.getSubject() == null) {

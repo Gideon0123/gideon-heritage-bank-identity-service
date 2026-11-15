@@ -3,6 +3,7 @@ package com.gideonheritagebank.IDENTITY_SERVICE.controller;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CompleteStaffOnboardingRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffOnboardingService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ public class StaffOnboardingController {
     private final StaffOnboardingService staffOnboardingService;
 
     @PostMapping("/complete")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> completeOnboarding(
             @Valid @RequestBody CompleteStaffOnboardingRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false)

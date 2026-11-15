@@ -8,6 +8,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffLifecycleResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffLifecycleService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -64,6 +65,7 @@ public class StaffLifecycleController {
 
     /* DISABLE STAFF IDENTITY */
     @PatchMapping("/disable")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> disableStaff(
             @PathVariable UUID staffUserId,
             HttpServletRequest request
@@ -80,6 +82,7 @@ public class StaffLifecycleController {
 
     /* SUSPEND STAFF IDENTITY */
     @PatchMapping("/suspend")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> suspendStaff(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody SuspendStaffRequest requestBody,
@@ -100,6 +103,7 @@ public class StaffLifecycleController {
 
     /* UNSUSPEND STAFF IDENTITY */
     @PatchMapping("/unsuspend")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> unsuspendStaff(
             @PathVariable UUID staffUserId,
             HttpServletRequest request
@@ -116,6 +120,7 @@ public class StaffLifecycleController {
 
     /* LOCK STAFF IDENTITY */
     @PatchMapping("/lock")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> lockStaff(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody LockStaffRequest requestBody,
@@ -136,6 +141,7 @@ public class StaffLifecycleController {
 
     /* UNLOCK STAFF IDENTITY */
     @PatchMapping("/unlock")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> unlockStaff(
             @PathVariable UUID staffUserId,
             HttpServletRequest request
@@ -152,6 +158,7 @@ public class StaffLifecycleController {
 
     /* DEACTIVATE STAFF IDENTITY */
     @PatchMapping("/deactivate")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> deactivateStaff(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody DeactivateStaffRequest requestBody,
@@ -176,6 +183,7 @@ public class StaffLifecycleController {
 
     /* CLOSE STAFF IDENTITY */
     @PatchMapping("/close")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffLifecycleResponse>> closeStaff(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody CloseStaffRequest requestBody,

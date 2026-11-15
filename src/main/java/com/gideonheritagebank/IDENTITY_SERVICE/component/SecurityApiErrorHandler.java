@@ -1,4 +1,4 @@
-package com.gideonheritagebank.IDENTITY_SERVICE.config;
+package com.gideonheritagebank.IDENTITY_SERVICE.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;

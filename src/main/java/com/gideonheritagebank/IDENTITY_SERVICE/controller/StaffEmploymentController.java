@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffEmploymentHistoryResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffEmploymentService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -31,13 +32,9 @@ public class StaffEmploymentController {
 
     private final StaffEmploymentService staffEmploymentService;
 
-    /*
-     * ============================================================
-     * UPDATE STAFF EMPLOYMENT
-     * ============================================================
-     */
-
+    /* UPDATE STAFF EMPLOYMENT */
     @PatchMapping
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffEmploymentHistoryResponse>> updateEmployment(
             @PathVariable UUID staffProfileId,
             @AuthenticationPrincipal Jwt jwt,
@@ -46,12 +43,11 @@ public class StaffEmploymentController {
     ) {
         UUID changedByUserId = getAuthenticatedUserId(jwt);
 
-        StaffEmploymentHistoryResponse response =
-                staffEmploymentService.updateEmployment(
-                        staffProfileId,
-                        requestBody,
-                        changedByUserId
-                );
+        StaffEmploymentHistoryResponse response = staffEmploymentService.updateEmployment(
+                staffProfileId,
+                requestBody,
+                changedByUserId
+        );
 
         return success(
                 "Staff employment information updated successfully.",
@@ -61,12 +57,7 @@ public class StaffEmploymentController {
         );
     }
 
-    /*
-     * ============================================================
-     * RETRIEVE EMPLOYMENT HISTORY
-     * ============================================================
-     */
-
+    /* RETRIEVE EMPLOYMENT HISTORY */
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<StaffEmploymentHistoryResponse>>> getEmploymentHistory(
             @PathVariable UUID staffProfileId,
@@ -78,11 +69,10 @@ public class StaffEmploymentController {
             ) Pageable pageable,
             HttpServletRequest request
     ) {
-        PagedResponse<StaffEmploymentHistoryResponse> history =
-                staffEmploymentService.getEmploymentHistory(
-                        staffProfileId,
-                        pageable
-                );
+        PagedResponse<StaffEmploymentHistoryResponse> history = staffEmploymentService.getEmploymentHistory(
+                staffProfileId,
+                pageable
+        );
 
         return success(
                 "Staff employment history retrieved successfully.",
@@ -92,18 +82,12 @@ public class StaffEmploymentController {
         );
     }
 
-    /*
-     * ============================================================
-     * RETRIEVE CURRENT EMPLOYMENT
-     * ============================================================
-     */
-
+    /* RETRIEVE CURRENT EMPLOYMENT */
     @GetMapping("/current")
     public ResponseEntity<ApiResponse<StaffEmploymentHistoryResponse>> getCurrentEmployment(
             @PathVariable UUID staffProfileId,
             HttpServletRequest request
     ) {
-
         StaffEmploymentHistoryResponse employment =
                 staffEmploymentService.getCurrentEmployment(staffProfileId);
 
@@ -115,26 +99,17 @@ public class StaffEmploymentController {
         );
     }
 
-    /*
-     * ============================================================
-     * COMMON HELPERS
-     * ============================================================
-     */
-
+    /* COMMON HELPERS */
     private UUID getAuthenticatedUserId(Jwt jwt) {
 
         if (jwt == null || jwt.getSubject() == null) {
-            throw new BusinessException(
-                    "Authenticated staff identity is unavailable."
-            );
+            throw new BusinessException("Authenticated staff identity is unavailable.");
         }
 
         try {
             return UUID.fromString(jwt.getSubject());
         } catch (IllegalArgumentException exception) {
-            throw new BusinessException(
-                    "Authenticated staff identity is invalid."
-            );
+            throw new BusinessException("Authenticated staff identity is invalid.");
         }
     }
 
@@ -144,7 +119,6 @@ public class StaffEmploymentController {
             HttpStatus status,
             HttpServletRequest request
     ) {
-
         String requestId = request.getHeader("X-Request-Id");
 
         if (requestId == null || requestId.isBlank()) {

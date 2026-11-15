@@ -4,6 +4,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.StaffIdentityCreation
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffIdentityService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({
-        "/staff", "/api/v1/identity/staff"
-})
+@RequestMapping({"/staff", "/api/v1/identity/staff"})
 @RequiredArgsConstructor
 public class StaffIdentityController {
 
@@ -25,6 +24,7 @@ public class StaffIdentityController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<IdentityResponse>> createStaff(
             @Valid @RequestBody StaffIdentityCreationRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,

@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.DepartmentResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.DepartmentService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -30,6 +31,7 @@ public class DepartmentController {
     private final DepartmentService departmentService;
 
     @PostMapping
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<DepartmentResponse>> createDepartment(
             @Valid @RequestBody CreateDepartmentRequest requestBody,
             HttpServletRequest request
@@ -55,7 +57,6 @@ public class DepartmentController {
             ) Pageable pageable,
             HttpServletRequest request
     ) {
-
         PagedResponse<DepartmentResponse> departments = departmentService.getDepartments(active, pageable);
 
 
@@ -83,12 +84,12 @@ public class DepartmentController {
     }
 
     @PatchMapping("/{departmentId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<DepartmentResponse>> updateDepartment(
             @PathVariable UUID departmentId,
             @Valid @RequestBody UpdateDepartmentRequest requestBody,
             HttpServletRequest request
     ) {
-
         DepartmentResponse department = departmentService.updateDepartment(
                 departmentId,
                 requestBody
@@ -103,12 +104,12 @@ public class DepartmentController {
     }
 
     @PatchMapping("/{departmentId}/activate")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<DepartmentResponse>> activateDepartment(
             @PathVariable UUID departmentId,
             HttpServletRequest request
     ) {
-        DepartmentResponse department =
-                departmentService.activateDepartment(departmentId);
+        DepartmentResponse department = departmentService.activateDepartment(departmentId);
 
         return success(
                 "Department activated successfully.",
@@ -119,12 +120,12 @@ public class DepartmentController {
     }
 
     @PatchMapping("/{departmentId}/deactivate")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<DepartmentResponse>> deactivateDepartment(
             @PathVariable UUID departmentId,
             HttpServletRequest request
     ) {
-        DepartmentResponse department =
-                departmentService.deactivateDepartment(departmentId);
+        DepartmentResponse department = departmentService.deactivateDepartment(departmentId);
 
         return success(
                 "Department deactivated successfully.",

@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerProfileRespo
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.AdminCustomerService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.IdentityService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -39,6 +40,7 @@ public class AdminCustomerController {
     private final IdentityService identityService;
 
     @PostMapping("/{customerId}/enable")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> enableCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody CustomerIdentityActionRequest requestBody,
@@ -62,6 +64,7 @@ public class AdminCustomerController {
     }
 
     @PostMapping("/{customerId}/disable")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> disableCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody CustomerIdentityActionRequest requestBody,
@@ -85,6 +88,7 @@ public class AdminCustomerController {
     }
 
     @PostMapping("/{customerId}/lock")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> lockCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody LockCustomerRequest requestBody,
@@ -109,6 +113,7 @@ public class AdminCustomerController {
     }
 
     @PostMapping("/{customerId}/unlock")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> unlockCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody CustomerIdentityActionRequest requestBody,
@@ -132,6 +137,7 @@ public class AdminCustomerController {
     }
 
     @PostMapping("/{customerId}/suspend")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> suspendCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody SuspendCustomerRequest requestBody,
@@ -155,6 +161,7 @@ public class AdminCustomerController {
     }
 
     @PostMapping("/{customerId}/unsuspend")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> unsuspendCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody CustomerIdentityActionRequest requestBody,
@@ -178,6 +185,7 @@ public class AdminCustomerController {
     }
 
     @PutMapping("/{customerId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateCustomer(
             @PathVariable UUID customerId,
             @Valid @RequestBody AdminUpdateCustomerRequest requestBody,
@@ -205,12 +213,10 @@ public class AdminCustomerController {
     public ResponseEntity<ApiResponse<PagedResponse<CustomerProfileResponse>>> getCustomers(
 
             @ModelAttribute CustomerFilterRequest filter,
-
             @PageableDefault(
                     page = 1, size = 20, sort = "createdAt", direction = Sort.Direction.DESC
             )
             Pageable pageable,
-
             HttpServletRequest httpRequest,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId
     ) {

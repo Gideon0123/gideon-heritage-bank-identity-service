@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerStaffConversionResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerStaffConversionService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class CustomerStaffConversionController {
     private final CustomerStaffConversionService conversionService;
 
     @PostMapping("/{customerUserId}/convert-to-staff")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerStaffConversionResponse>> convertCustomerToStaff(
             @PathVariable UUID customerUserId,
             @Valid @RequestBody ConvertCustomerToStaffRequest staffRequest,

@@ -9,6 +9,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffRoleHistoryResp
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffRoleResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffRoleManagementService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -51,6 +52,7 @@ public class StaffRoleManagementController {
     }
 
     @PostMapping("/assign")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffRoleResponse>> assignRole(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody AssignStaffRoleRequest roleRequest,
@@ -74,6 +76,7 @@ public class StaffRoleManagementController {
     }
 
     @PatchMapping("/change")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffRoleResponse>> changeRole(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody ChangeStaffRoleRequest roleRequest,
@@ -98,6 +101,7 @@ public class StaffRoleManagementController {
 
 
     @PatchMapping("/remove")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffRoleResponse>> removeRole(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody RemoveStaffRoleRequest roleRequest,

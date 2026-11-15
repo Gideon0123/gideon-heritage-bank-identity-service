@@ -6,6 +6,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffAddressResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffAddressService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class StaffAddressController {
 
     /* ADD STAFF ADDRESS */
     @PostMapping
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffAddressResponse>> addAddress(
             @PathVariable UUID staffUserId,
             @Valid @RequestBody CreateStaffAddressRequest requestBody,
@@ -96,6 +98,7 @@ public class StaffAddressController {
 
     /* UPDATE STAFF ADDRESS */
     @PatchMapping("/{addressId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffAddressResponse>> updateAddress(
             @PathVariable UUID staffUserId,
             @PathVariable UUID addressId,
@@ -118,6 +121,7 @@ public class StaffAddressController {
 
     /* DELETE STAFF ADDRESS */
     @DeleteMapping("/{addressId}")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
             @PathVariable UUID staffUserId,
             @PathVariable UUID addressId,
@@ -135,6 +139,7 @@ public class StaffAddressController {
 
     /* MAKE ADDRESS PRIMARY */
     @PatchMapping("/{addressId}/primary")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffAddressResponse>> makePrimary(
             @PathVariable UUID staffUserId,
             @PathVariable UUID addressId,

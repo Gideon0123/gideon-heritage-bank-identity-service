@@ -10,6 +10,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.service.AuthenticationService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordResetService;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.ChangePasswordRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.PasswordChangeService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -90,6 +91,7 @@ public class AuthenticationController {
      * ============================================================
      */
     @PostMapping("/login")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<IdentityResponse>> login(
             @Valid @RequestBody LoginRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false)
@@ -134,6 +136,7 @@ public class AuthenticationController {
      * ============================================================
      */
     @PostMapping("/refresh-token")
+    @Idempotent(ttlMinutes = 1)
     public ResponseEntity<ApiResponse<IdentityResponse>> refresh(
             @CookieValue(
                     name = "${identity.security.cookies.refresh-name:REFRESH_TOKEN}",
@@ -224,14 +227,13 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
+    @Idempotent(ttlMinutes = 1)
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @Valid @RequestBody ForgotPasswordRequest requestBody,
             HttpServletRequest request
     ) {
-        passwordResetService.requestPasswordReset(
-                requestBody.email()
-        );
+        passwordResetService.requestPasswordReset(requestBody.email());
 
         /*
          * The same response is returned whether or not the email exists.
@@ -254,6 +256,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/reset-password")
+    @Idempotent(ttlMinutes = 1)
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -287,6 +290,7 @@ public class AuthenticationController {
      */
 
     @PostMapping("/change-password")
+    @Idempotent(ttlMinutes = 1)
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ChangePasswordRequest requestBody,
@@ -341,11 +345,7 @@ public class AuthenticationController {
                 .body(response);
     }
 
-    /*
-     * ============================================================
-     * COOKIE HELPERS
-     * ============================================================
-     */
+    /* COOKIE HELPERS */
     private ResponseCookie createCookie(
             String name,
             String value,

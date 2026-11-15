@@ -7,6 +7,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.EmailVerificationService;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.IdentityService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ public class IdentityController {
     private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/register")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<IdentityResponse>> registerCustomer(
             @Valid @RequestBody RegisterRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -47,6 +49,7 @@ public class IdentityController {
     }
 
     @PostMapping("/verify-email")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -66,6 +69,7 @@ public class IdentityController {
     }
 
     @PostMapping("/resend-verification")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,

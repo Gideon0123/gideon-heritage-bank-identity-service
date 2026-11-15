@@ -8,6 +8,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerClosureRespo
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.CustomerClosureStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerClosureService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -64,14 +65,13 @@ public class AdminCustomerClosureController {
         );
     }
 
+    /* RETRIEVE CLOSURE REQUEST */
     @GetMapping("/{requestId}")
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> getClosureRequest(
             @PathVariable UUID requestId,
             HttpServletRequest request
     ) {
-
-        CustomerClosureResponse closure =
-                customerClosureService.getClosureRequest(requestId);
+        CustomerClosureResponse closure = customerClosureService.getClosureRequest(requestId);
 
         return success(
                 "Customer closure request retrieved successfully.",
@@ -81,28 +81,22 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * BEGIN REVIEW
-     * ============================================================
-     */
-
+    /* BEGIN REVIEW */
     @PostMapping("/{requestId}/review")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> beginReview(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ClosureReviewRequest requestBody,
             HttpServletRequest request
     ) {
-
         UUID staffId = getAuthenticatedUserId(jwt);
 
-        CustomerClosureResponse closure =
-                customerClosureService.beginReview(
-                        requestId,
-                        staffId,
-                        requestBody.notes()
-                );
+        CustomerClosureResponse closure = customerClosureService.beginReview(
+                requestId,
+                staffId,
+                requestBody.notes()
+        );
 
         return success(
                 "Customer closure request moved to review.",
@@ -112,29 +106,22 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * REQUEST FINANCIAL CLEARANCE
-     * ============================================================
-     */
-
+    /* REQUEST FINANCIAL CLEARANCE */
     @PostMapping("/{requestId}/request-financial-clearance")
-    public ResponseEntity<ApiResponse<CustomerClosureResponse>>
-    requestFinancialClearance(
+    @Idempotent(ttlMinutes = 3)
+    public ResponseEntity<ApiResponse<CustomerClosureResponse>> requestFinancialClearance(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ClosureReviewRequest requestBody,
             HttpServletRequest request
     ) {
-
         UUID staffId = getAuthenticatedUserId(jwt);
 
-        CustomerClosureResponse closure =
-                customerClosureService.requestFinancialClearance(
-                        requestId,
-                        staffId,
-                        requestBody.notes()
-                );
+        CustomerClosureResponse closure = customerClosureService.requestFinancialClearance(
+                requestId,
+                staffId,
+                requestBody.notes()
+        );
 
         return success(
                 "Financial clearance has been requested.",
@@ -144,30 +131,24 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * CONFIRM FINANCIAL CLEARANCE
-     * ============================================================
-     */
-
+    /* CONFIRM FINANCIAL CLEARANCE */
     @PostMapping("/{requestId}/financial-clearance")
     @PreAuthorize("hasAnyRole('ADMIN', 'RISK_OFFICER')")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> confirmFinancialClearance(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ClosureFinancialClearanceRequest requestBody,
             HttpServletRequest request
     ) {
-
         UUID staffId = getAuthenticatedUserId(jwt);
 
-        CustomerClosureResponse closure =
-                customerClosureService.confirmFinancialClearance(
-                        requestId,
-                        staffId,
-                        requestBody.reference(),
-                        requestBody.notes()
-                );
+        CustomerClosureResponse closure = customerClosureService.confirmFinancialClearance(
+                requestId,
+                staffId,
+                requestBody.reference(),
+                requestBody.notes()
+        );
 
         return success(
                 "Financial clearance recorded. Customer closure is ready for completion.",
@@ -177,13 +158,9 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * REJECT CLOSURE REQUEST
-     * ============================================================
-     */
-
+    /* REJECT CLOSURE REQUEST */
     @PostMapping("/{requestId}/reject")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> rejectClosure(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
@@ -192,12 +169,11 @@ public class AdminCustomerClosureController {
     ) {
         UUID staffId = getAuthenticatedUserId(jwt);
 
-        CustomerClosureResponse closure =
-                customerClosureService.rejectClosureRequest(
-                        requestId,
-                        staffId,
-                        requestBody.reason()
-                );
+        CustomerClosureResponse closure = customerClosureService.rejectClosureRequest(
+                requestId,
+                staffId,
+                requestBody.reason()
+        );
 
         return success(
                 "Customer closure request rejected.",
@@ -207,14 +183,10 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * COMPLETE CUSTOMER CLOSURE
-     * ============================================================
-     */
-
+    /* COMPLETE CUSTOMER CLOSURE */
     @PostMapping("/{requestId}/complete")
     @PreAuthorize("hasRole('ADMIN')")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> completeClosure(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal Jwt jwt,
@@ -222,11 +194,10 @@ public class AdminCustomerClosureController {
     ) {
         UUID staffId = getAuthenticatedUserId(jwt);
 
-        CustomerClosureResponse closure =
-                customerClosureService.completeClosure(
-                        requestId,
-                        staffId
-                );
+        CustomerClosureResponse closure = customerClosureService.completeClosure(
+                requestId,
+                staffId
+        );
 
         return success(
                 "Customer identity closure completed successfully.",
@@ -236,12 +207,7 @@ public class AdminCustomerClosureController {
         );
     }
 
-    /*
-     * ============================================================
-     * COMMON HELPERS
-     * ============================================================
-     */
-
+    /* COMMON HELPERS */
     private UUID getAuthenticatedUserId(Jwt jwt) {
 
         if (jwt == null || jwt.getSubject() == null) {
@@ -259,7 +225,6 @@ public class AdminCustomerClosureController {
             HttpStatus status,
             HttpServletRequest request
     ) {
-
         String requestId = request.getHeader("X-Request-Id");
 
         if (requestId == null || requestId.isBlank()) {

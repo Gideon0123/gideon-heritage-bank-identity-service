@@ -4,6 +4,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.CreateCustomerClosure
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.CustomerClosureResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.CustomerClosureService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ public class CustomerClosureController {
     private final CustomerClosureService customerClosureService;
 
     @PostMapping
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> requestClosure(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateCustomerClosureRequest requestBody,
@@ -65,6 +67,7 @@ public class CustomerClosureController {
     }
 
     @PostMapping("/{requestId}/cancel")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<CustomerClosureResponse>> cancelClosureRequest(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID requestId,
