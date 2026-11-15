@@ -1,6 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.storage;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ProfileImageResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.CurrentUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
