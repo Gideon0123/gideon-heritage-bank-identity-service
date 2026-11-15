@@ -12,7 +12,6 @@ import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSearchSpecification;
 import com.gideonheritagebank.IDENTITY_SERVICE.specification.CustomerSpecification;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -94,8 +93,17 @@ public class AdminCustomerService {
                 .map(identityMapper::toCustomerProfileResponse)
                 .map(profileImageUrlResolver::resolve);
     }
-    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
+    @Caching(evict = {
+            @CacheEvict(
+                    cacheNames = CacheNames.CUSTOMER_PROFILE,
+                    key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"
+            ),
+            @CacheEvict(
+                    cacheNames = CacheNames.CUSTOMER_STATUS,
+                    key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)"
+            )
+    })
     @Transactional
     public CustomerProfileResponse updateCustomerByStaff(
             UUID customerId,
@@ -106,7 +114,7 @@ public class AdminCustomerService {
         BankUser customer = getCustomerForUpdate(customerId);
         String firstName = normalizeName(request.firstName());
         String lastName = normalizeName(request.lastName());
-        String phoneNumber = getPhoneNumber(customerId, request, firstName, lastName);
+        String phoneNumber = getPhoneNumber(request, firstName, lastName);
 
         if (bankUserRepository.existsByPhoneNumberAndIdNot(
                 phoneNumber,
@@ -132,29 +140,32 @@ public class AdminCustomerService {
         );
     }
 
-    private @NonNull String getPhoneNumber(
-            UUID customerId,
+    private String getPhoneNumber(
             AdminUpdateCustomerRequest request,
             String firstName,
             String lastName
     ) {
-        BankUser customer = getCustomerForUpdate(customerId);
 
         String phoneNumber = normalizePhoneNumber(request.phoneNumber());
 
         if (firstName.isBlank()) {
-            throw new InvalidIdentityStateException("First name is required.");
-//            return customer.getFirstName();
+            throw new InvalidIdentityStateException(
+                    "First name is required."
+            );
         }
 
         if (lastName.isBlank()) {
-            throw new InvalidIdentityStateException("Last name is required.");
-//            return customer.getLastName();
+            throw new InvalidIdentityStateException(
+                    "Last name is required."
+            );
         }
 
         if (phoneNumber.isBlank()) {
-            throw new InvalidIdentityStateException("Phone number is required.");
+            throw new InvalidIdentityStateException(
+                    "Phone number is required."
+            );
         }
+
         return phoneNumber;
     }
 

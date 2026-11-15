@@ -130,6 +130,11 @@
 			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+		</dependency>
+
 		<!-- Enables authenticated downstream calls through OpenFeign -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

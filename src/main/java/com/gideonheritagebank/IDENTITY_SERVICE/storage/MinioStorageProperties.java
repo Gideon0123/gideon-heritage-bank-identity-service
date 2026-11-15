@@ -1,12 +1,13 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.storage;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
 @Getter
 @Setter
@@ -18,13 +19,16 @@ public class MinioStorageProperties {
     private String endpoint = "http://localhost:9000";
 
     @NotBlank
-    private String accessKey = "minioadmin";
+    @Value("${storage.minio.access-key}")
+    private String accessKey;
 
     @NotBlank
-    private String secretKey = "minioadmin";
+    @Value("${storage.minio.secret-key}")
+    private String secretKey;
 
     @NotBlank
-    private String bucket = "ghb-profile-images";
+    @Value("${storage.minio.bucket}")
+    private String bucket;
 
     @Min(1)
     @Max(5242880)
