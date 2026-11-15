@@ -29,6 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +54,12 @@ public class StaffEmploymentService {
      *
      * It must never be taken from the request body.
      */
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_EMPLOYMENT, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, allEntries = true)
+    })
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public StaffEmploymentHistoryResponse updateEmployment(
@@ -156,6 +166,8 @@ public class StaffEmploymentService {
     }
 
     /* GET STAFF EMPLOYMENT HISTORY */
+    @Cacheable(cacheNames = CacheNames.STAFF_EMPLOYMENT,
+            key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).page('staff-employment-history:' + #p0, #p1.pageNumber, #p1.pageSize, #p1.sort.toString())")
     public PagedResponse<StaffEmploymentHistoryResponse> getEmploymentHistory(
             UUID staffProfileId,
             Pageable pageable
@@ -179,6 +191,8 @@ public class StaffEmploymentService {
     }
 
     /* GET CURRENT EMPLOYMENT HISTORY */
+    @Cacheable(cacheNames = CacheNames.STAFF_EMPLOYMENT,
+            key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffEmployment(#p0)")
     public StaffEmploymentHistoryResponse getCurrentEmployment(
             UUID staffProfileId
     ) {

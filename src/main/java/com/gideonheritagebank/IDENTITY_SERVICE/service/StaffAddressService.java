@@ -25,6 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,7 @@ public class StaffAddressService {
     private static final int MAX_PAGE_SIZE = 100;
 
     /* GET STAFF ADDRESSES */
+    @Cacheable(cacheNames = CacheNames.STAFF_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).page('staff-addresses:' + #p0, #p1.pageNumber, #p1.pageSize, #p1.sort.toString())")
     @PreAuthorize("hasRole('ADMIN')")
     public PagedResponse<StaffAddressResponse> getStaffAddresses(
             UUID staffUserId,
@@ -56,6 +60,7 @@ public class StaffAddressService {
     }
 
     /* GET STAFF ADDRESS BY ID */
+    @Cacheable(cacheNames = CacheNames.STAFF_ADDRESSES, key = "'single:' + #p0 + ':' + #p1")
     @PreAuthorize("hasRole('ADMIN')")
     public StaffAddressResponse getStaffAddressById(
             UUID staffUserId,
@@ -69,6 +74,7 @@ public class StaffAddressService {
 
     /* ADD STAFF ADDRESS */
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.STAFF_ADDRESSES, allEntries = true)
     @PreAuthorize("hasRole('ADMIN')")
     public StaffAddressResponse addAddress(
             UUID staffUserId,
@@ -111,6 +117,7 @@ public class StaffAddressService {
 
     /* UPDATE STAFF ADDRESS */
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.STAFF_ADDRESSES, allEntries = true)
     @PreAuthorize("hasRole('ADMIN')")
     public StaffAddressResponse updateAddress(
             UUID staffUserId,
@@ -158,6 +165,7 @@ public class StaffAddressService {
 
     /* DELETE STAFF ADDRESS */
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.STAFF_ADDRESSES, allEntries = true)
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteAddress(
             UUID staffUserId,
@@ -184,6 +192,7 @@ public class StaffAddressService {
 
     /* MAKE STAFF ADDRESS PRIMARY */
     @Transactional
+    @CacheEvict(cacheNames = CacheNames.STAFF_ADDRESSES, allEntries = true)
     @PreAuthorize("hasRole('ADMIN')")
     public StaffAddressResponse makePrimary(
             UUID staffUserId,

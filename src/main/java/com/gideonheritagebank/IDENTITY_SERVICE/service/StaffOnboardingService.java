@@ -20,6 +20,9 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,11 @@ public class StaffOnboardingService {
     private final StaffOnboardingTokenRepository staffOnboardingTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true)
+    })
 
     @Transactional
     public void completeOnboarding(

@@ -29,6 +29,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +49,7 @@ public class StaffLifecycleService {
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("closedAt");
 
     /* GET STAFF LIFECYCLE STATUS */
+    @Cacheable(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)")
 
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse getStaffLifecycleStatus(UUID staffUserId) {
@@ -56,6 +61,7 @@ public class StaffLifecycleService {
 
     /* ENABLE STAFF IDENTITY */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse enableStaff(UUID staffUserId) {
 
@@ -82,6 +88,7 @@ public class StaffLifecycleService {
 
     /* DISABLE STAFF IDENTITY */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse disableStaff(UUID staffUserId) {
 
@@ -100,6 +107,7 @@ public class StaffLifecycleService {
 
     /* SUSPEND STAFF IDENTITY */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse suspendStaff(
             UUID staffUserId,
@@ -129,6 +137,7 @@ public class StaffLifecycleService {
 
     /* UNSUSPEND STAFF IDENTITY */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse unsuspendStaff(UUID staffUserId) {
 
@@ -154,6 +163,7 @@ public class StaffLifecycleService {
 
     /* LOCK STAFF IDENTITY*/
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse lockStaff(
             UUID staffUserId,
@@ -192,6 +202,7 @@ public class StaffLifecycleService {
 
     /* UNLOCK STAFF IDENTITY */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse unlockStaff(UUID staffUserId) {
 
@@ -220,6 +231,7 @@ public class StaffLifecycleService {
      * Employment history is maintained by StaffEmploymentService.
      */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"), @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse deactivateStaff(
             UUID staffUserId,
@@ -319,6 +331,13 @@ public class StaffLifecycleService {
 
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_STATUS,
+                    key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_CLOSURE_HISTORY, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffLifecycleResponse closeStaff(
             UUID staffUserId,
@@ -426,6 +445,7 @@ public class StaffLifecycleService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheNames.STAFF_CLOSURE_HISTORY, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).page('staff-closure-history', #p0.pageNumber, #p0.pageSize, #p0.sort.toString())")
     @PreAuthorize("hasRole('ADMIN')")
     public Page<StaffClosureHistoryResponse> getStaffClosureHistory(
             Pageable pageable

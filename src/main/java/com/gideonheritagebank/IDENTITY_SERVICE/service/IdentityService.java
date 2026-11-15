@@ -27,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -98,6 +101,7 @@ public class IdentityService {
 
         return identityMapper.toIdentityResponse(savedUser);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
 
 
@@ -120,6 +124,7 @@ public class IdentityService {
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
         return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse disableCustomer(
@@ -142,6 +147,7 @@ public class IdentityService {
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse lockCustomer(
@@ -172,6 +178,7 @@ public class IdentityService {
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse unlockCustomer(
@@ -194,6 +201,7 @@ public class IdentityService {
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse suspendCustomer(
@@ -215,6 +223,7 @@ public class IdentityService {
 
         return identityMapper.toCustomerProfileResponse(savedCustomer);
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse unsuspendCustomer(

@@ -27,6 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +47,10 @@ public class DepartmentService {
 
     /* CREATE DEPARTMENT */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.DEPARTMENTS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public DepartmentResponse createDepartment(
             CreateDepartmentRequest request
@@ -73,6 +81,7 @@ public class DepartmentService {
     }
 
     /* GET DEPARTMENT BY ID */
+    @Cacheable(cacheNames = CacheNames.DEPARTMENTS, key = "'id:' + #p0")
     public DepartmentResponse getDepartmentById(
             UUID departmentId
     ) {
@@ -82,6 +91,8 @@ public class DepartmentService {
     }
 
     /* GET DEPARTMENTS WITH PAGINATION */
+    @Cacheable(cacheNames = CacheNames.DEPARTMENTS,
+            key = "'list:active:' + #p0 + ':page:' + #p1.pageNumber + ':size:' + #p1.pageSize + ':sort:' + #p1.sort.toString()")
     public PagedResponse<DepartmentResponse> getDepartments(
             Boolean active,
             Pageable pageable
@@ -104,6 +115,10 @@ public class DepartmentService {
 
     /* UPDATE DEPARTMENT */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.DEPARTMENTS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public DepartmentResponse updateDepartment(
             UUID departmentId,
@@ -149,6 +164,10 @@ public class DepartmentService {
 
     /* DEACTIVATE DEPARTMENT */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.DEPARTMENTS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public DepartmentResponse deactivateDepartment(
             UUID departmentId
@@ -170,6 +189,10 @@ public class DepartmentService {
 
     /* ACTIVATE DEPARTMENT */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.DEPARTMENTS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public DepartmentResponse activateDepartment(
             UUID departmentId

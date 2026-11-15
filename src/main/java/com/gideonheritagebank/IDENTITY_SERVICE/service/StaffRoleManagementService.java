@@ -36,6 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +53,7 @@ public class StaffRoleManagementService {
     private final IdentityMapper identityMapper;
     private static final int MAX_PAGE_SIZE = 100;
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("changedAt");
+    @Cacheable(cacheNames = CacheNames.STAFF_ROLE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffRole(#p0)")
 
 
     @Transactional(readOnly = true)
@@ -57,6 +62,7 @@ public class StaffRoleManagementService {
         StaffProfile staffProfile = findStaffProfile(staffUserId);
         return identityMapper.toStaffRoleResponse(staffProfile);
     }
+    @Cacheable(cacheNames = CacheNames.STAFF_ROLE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).page('staff-role-history:' + #p0, #p1.pageNumber, #p1.pageSize, #p1.sort.toString())")
 
     @Transactional(readOnly = true)
     public Page<StaffRoleHistoryResponse> getStaffRoleHistory(
@@ -73,6 +79,11 @@ public class StaffRoleManagementService {
                 )
                 .map(identityMapper::toStaffRoleHistoryResponse);
     }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_ROLE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true)
+    })
 
     @Transactional
     public StaffRoleResponse assignRole(
@@ -118,6 +129,11 @@ public class StaffRoleManagementService {
 
         return identityMapper.toStaffRoleResponse(staffProfile);
     }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_ROLE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true)
+    })
 
     @Transactional
     public StaffRoleResponse changeRole(
@@ -176,6 +192,11 @@ public class StaffRoleManagementService {
 
         return identityMapper.toStaffRoleResponse(staffProfile);
     }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_ROLE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true)
+    })
 
     @Transactional
     public StaffRoleResponse removeRole(

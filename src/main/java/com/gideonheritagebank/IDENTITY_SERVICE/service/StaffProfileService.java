@@ -20,6 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+import com.gideonheritagebank.IDENTITY_SERVICE.storage.ProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +34,10 @@ public class StaffProfileService {
     private final StaffProfileRepository staffProfileRepository;
     private final BankUserRepository bankUserRepository;
     private final IdentityMapper identityMapper;
+    private final ProfileImageUrlResolver profileImageUrlResolver;
 
     /* GET STAFF PROFILE BY STAFF PROFILE ID */
+    @Cacheable(cacheNames = CacheNames.STAFF_PROFILE, key = "'profile:' + #p0")
     @PreAuthorize("hasRole('ADMIN')")
     public StaffProfileResponse getStaffProfileById(
             UUID staffProfileId
@@ -41,10 +48,13 @@ public class StaffProfileService {
                         )
                 );
 
-        return identityMapper.toStaffProfileResponse(profile);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toStaffProfileResponse(profile)
+        );
     }
 
     /* GET STAFF PROFILE BY BANK USER ID */
+    @Cacheable(cacheNames = CacheNames.STAFF_PROFILE, key = "'user:' + #p0")
     @PreAuthorize("hasRole('ADMIN')")
     public StaffProfileResponse getStaffProfileByUserId(
             UUID userId
@@ -57,11 +67,14 @@ public class StaffProfileService {
                         )
                 );
 
-        return identityMapper.toStaffProfileResponse(profile);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toStaffProfileResponse(profile)
+        );
     }
 
     /* UPDATE STAFF PERSONAL PROFILE */
     @Transactional
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true), @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true) })
     @PreAuthorize("hasRole('ADMIN')")
     public StaffProfileResponse updateStaffProfile(
             UUID staffProfileId,
@@ -106,11 +119,17 @@ public class StaffProfileService {
         updateFirstName(staffUser, request.firstName());
         updateLastName(staffUser, request.lastName());
         updatePhoneNumber(staffUser, request.phoneNumber());
-        updateProfilePhoto(staffUser, request.profilePhotoUrl());
+        if (request.profilePhotoUrl() != null) {
+            throw new BadRequest(
+                    "Profile images must be uploaded through POST /api/v1/identity/profile-image."
+            );
+        }
 
         bankUserRepository.saveAndFlush(staffUser);
 
-        return identityMapper.toStaffProfileResponse(profile);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toStaffProfileResponse(profile)
+        );
     }
 
     private void updateFirstName(
@@ -170,19 +189,6 @@ public class StaffProfileService {
         }
 
         user.setPhoneNumber(normalized);
-    }
-
-    private void updateProfilePhoto(
-            BankUser user,
-            String profilePhotoUrl
-    ) {
-        if (profilePhotoUrl == null) {
-            return;
-        }
-
-        String normalized = profilePhotoUrl.trim();
-
-        user.setProfilePhotoUrl(normalized.isBlank() ? null : normalized);
     }
 
     private String normalizeName(String value) {

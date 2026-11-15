@@ -23,6 +23,9 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +51,16 @@ public class CustomerStaffConversionService {
     private final IdentityMapper identityMapper;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffStatus(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_ROLE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffRole(#p0)"),
+            @CacheEvict(cacheNames = CacheNames.STAFF_EMPLOYMENT, allEntries = true)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     public CustomerStaffConversionResponse convertCustomerToStaff(
             UUID customerUserId,
