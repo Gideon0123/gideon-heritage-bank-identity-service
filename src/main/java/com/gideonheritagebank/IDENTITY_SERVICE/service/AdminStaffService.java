@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +50,7 @@ public class AdminStaffService {
 
     /* Retrieve one staff member by identity ID. */
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheNames.STAFF_DIRECTORY, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).staffDirectory(#p0)")
     @PreAuthorize("hasRole('ADMIN')")
     public StaffResponse getStaffById(UUID staffId) {
 

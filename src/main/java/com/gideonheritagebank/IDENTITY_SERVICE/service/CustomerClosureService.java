@@ -29,6 +29,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 @Service
 @RequiredArgsConstructor
@@ -255,6 +258,10 @@ public class CustomerClosureService {
     }
 
     /* FINAL IDENTITY CLOSURE */
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, allEntries = true)
+    })
     @Transactional
     public CustomerClosureResponse completeClosure(
             UUID requestId,

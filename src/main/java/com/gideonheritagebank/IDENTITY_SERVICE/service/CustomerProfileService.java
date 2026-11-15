@@ -13,6 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
+import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.storage.ProfileImageUrlResolver;
 
 @Service
 @RequiredArgsConstructor
@@ -20,13 +26,18 @@ public class CustomerProfileService {
 
     private final BankUserRepository bankUserRepository;
     private final IdentityMapper identityMapper;
+    private final ProfileImageUrlResolver profileImageUrlResolver;
+    @Cacheable(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)")
 
     @Transactional(readOnly = true)
     public CustomerProfileResponse getMyProfile(UUID customerId) {
 
         BankUser customer = getCustomer(customerId);
-        return identityMapper.toCustomerProfileResponse(customer);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toCustomerProfileResponse(customer)
+        );
     }
+    @Caching(evict = { @CacheEvict(cacheNames = CacheNames.CUSTOMER_PROFILE, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerProfile(#p0)"), @CacheEvict(cacheNames = CacheNames.CUSTOMER_STATUS, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerStatus(#p0)") })
 
     @Transactional
     public CustomerProfileResponse updateMyProfile(
@@ -34,6 +45,12 @@ public class CustomerProfileService {
             UpdateCustomerProfileRequest request
     ) {
         BankUser customer = getCustomerForUpdate(customerId);
+
+        if (request.profilePhotoUrl() != null) {
+            throw new BadRequest(
+                    "Profile images must be uploaded through POST /api/v1/identity/profile-image."
+            );
+        }
 
         String firstName = normalizeName(request.firstName());
         String lastName = normalizeName(request.lastName());
@@ -52,16 +69,11 @@ public class CustomerProfileService {
         customer.setLastName(lastName);
         customer.setPhoneNumber(phoneNumber);
 
-        String profilePhotoUrl = request.profilePhotoUrl();
-
-        customer.setProfilePhotoUrl(
-                profilePhotoUrl == null || profilePhotoUrl.isBlank()
-                        ? null : profilePhotoUrl.trim()
-        );
-
         BankUser savedCustomer = bankUserRepository.saveAndFlush(customer);
 
-        return identityMapper.toCustomerProfileResponse(savedCustomer);
+        return profileImageUrlResolver.resolve(
+                identityMapper.toCustomerProfileResponse(savedCustomer)
+        );
     }
 
     private BankUser getCustomer(UUID customerId) {

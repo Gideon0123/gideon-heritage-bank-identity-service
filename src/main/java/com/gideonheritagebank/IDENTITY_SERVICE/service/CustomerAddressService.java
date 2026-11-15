@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class CustomerAddressService {
     private final BankUserRepository bankUserRepository;
     private final UserAddressRepository userAddressRepository;
     private final IdentityMapper identityMapper;
+    @Cacheable(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)")
 
     @Transactional(readOnly = true)
     public List<CustomerAddressResponse> getMyAddresses(UUID customerId) {
@@ -37,6 +41,7 @@ public class CustomerAddressService {
                 .map(identityMapper::toCustomerAddressResponse)
                 .toList();
     }
+    @CacheEvict(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)")
 
     @Transactional
     public CustomerAddressResponse addAddress(
@@ -74,6 +79,7 @@ public class CustomerAddressService {
 
         return identityMapper.toCustomerAddressResponse(address);
     }
+    @CacheEvict(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)")
 
     @Transactional
     public CustomerAddressResponse updateAddress(
@@ -138,6 +144,7 @@ public class CustomerAddressService {
 
         return identityMapper.toCustomerAddressResponse(savedAddress);
     }
+    @CacheEvict(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)")
 
     @Transactional
     public void deleteAddress(UUID customerId, UUID addressId) {
@@ -153,6 +160,7 @@ public class CustomerAddressService {
 
         bankUserRepository.saveAndFlush(customer);
     }
+    @CacheEvict(cacheNames = CacheNames.CUSTOMER_ADDRESSES, key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).customerAddresses(#p0)")
 
     @Transactional
     public CustomerAddressResponse makePrimary(
