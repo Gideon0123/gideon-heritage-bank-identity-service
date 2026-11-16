@@ -5,10 +5,12 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.LoginRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.IdentityResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.RefreshToken;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RefreshTokenRepository;
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.security.JwtService;
 import com.gideonheritagebank.IDENTITY_SERVICE.storage.ProfilePhotoUrlService;
 import jakarta.annotation.PostConstruct;
@@ -35,6 +37,7 @@ import java.util.Optional;
 public class AuthenticationService {
 
     private final ProfilePhotoUrlService profilePhotoUrlService;
+    private final StaffProfileRepository staffProfileRepository;
     private final BankUserRepository bankUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -160,11 +163,20 @@ public class AuthenticationService {
 
         /* Successful authentication:
            reset the failed-login counter and stale lock metadata. */
+        Instant loginTime = Instant.now();
+
         user.setFailedLoginAttempts(0);
         user.setAccountNonLocked(true);
         user.setLockedUntil(null);
 
         BankUser authenticatedUser = bankUserRepository.saveAndFlush(user);
+
+        if (authenticatedUser.getUserType() == UserType.STAFF) {
+            staffProfileRepository.updateLastLoginAtByUserId(
+                    authenticatedUser.getId(),
+                    loginTime
+            );
+        }
 
         /* Issue the signed, short-lived access token. */
         String accessToken = jwtService.generateAccessToken(authenticatedUser);

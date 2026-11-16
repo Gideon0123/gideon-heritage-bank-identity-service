@@ -84,6 +84,7 @@ public interface IdentityMapper {
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentCode", source = "department.departmentCode")
     @Mapping(target = "departmentName", source = "department.name")
+    @Mapping(target = "lastLoginAt", source = "lastLoginAt")
     StaffProfileResponse toStaffProfileResponse(StaffProfile staffProfile);
 
     @Mapping(target = "id", source = "id")

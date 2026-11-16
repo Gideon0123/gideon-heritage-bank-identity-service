@@ -3,12 +3,10 @@ package com.gideonheritagebank.IDENTITY_SERVICE.repository;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +15,17 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
     Optional<StaffProfile> findByUser_Id(UUID userId);
 
     Optional<StaffProfile> findByEmployeeNumber(String employeeNumber);
+
+    @Modifying
+    @Query("""
+        UPDATE StaffProfile sp
+        SET sp.lastLoginAt = :loginAt
+        WHERE sp.user.id = :userId
+        """)
+    int updateLastLoginAtByUserId(
+            @Param("userId") UUID userId,
+            @Param("loginAt") Instant loginAt
+    );
 
     boolean existsByEmployeeNumber(String employeeNumber);
 
