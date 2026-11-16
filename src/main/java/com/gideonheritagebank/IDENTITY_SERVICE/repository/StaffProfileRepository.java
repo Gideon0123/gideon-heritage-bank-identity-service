@@ -34,12 +34,6 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
             UUID id
     );
 
-    @EntityGraph(attributePaths = {"user", "department"})
-    Optional<StaffProfile> findWithUserAndDepartmentById(UUID id);
-
-    @EntityGraph(attributePaths = {"user", "department"})
-    Optional<StaffProfile> findWithUserAndDepartmentByUser_Id(UUID userId);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT sp
@@ -64,4 +58,20 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
             UUID departmentId,
             EmploymentStatus employmentStatus
     );
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "department",
+            "branch",
+            "branch.branchManager"
+    })
+    Optional<StaffProfile> findWithUserAndDepartmentById(UUID id);
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "department",
+            "branch",
+            "branch.branchManager"
+    })
+    Optional<StaffProfile> findWithUserAndDepartmentByUser_Id(UUID userId);
 }

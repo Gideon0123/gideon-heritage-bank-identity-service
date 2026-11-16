@@ -21,4 +21,5 @@ public final class CacheNames {
     public static final String STAFF_SEARCH = "staff-search";
 
     public static final String DEPARTMENTS = "departments";
+    public static final String BRANCHES = "branches";
 }

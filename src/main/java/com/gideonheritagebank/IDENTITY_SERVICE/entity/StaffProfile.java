@@ -91,9 +91,14 @@ public class StaffProfile {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    /* Reference to the future Branch Service. */
-    @Column(name = "branch_id")
-    private UUID branchId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "branch_id",
+            foreignKey = @ForeignKey(
+                    name = "fk_staff_profiles_branch"
+            )
+    )
+    private Branch branch;
 
     @Column(name = "job_title", length = 120)
     private String jobTitle;

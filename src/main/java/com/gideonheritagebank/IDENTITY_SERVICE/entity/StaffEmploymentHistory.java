@@ -73,8 +73,20 @@ public class StaffEmploymentHistory {
      * Reference to the future Branch Service.
      * There is deliberately no JPA relationship.
      */
+    /*
+     * Branch reference.
+     *
+     * The UUID is retained in the history record while the
+     * branch code and name are stored as historical snapshots.
+     */
     @Column(name = "branch_id")
     private UUID branchId;
+
+    @Column(name = "branch_code_snapshot", length = 50)
+    private String branchCodeSnapshot;
+
+    @Column(name = "branch_name_snapshot", length = 120)
+    private String branchNameSnapshot;
 
     @Column(name = "job_title", length = 120)
     private String jobTitle;
@@ -110,7 +122,7 @@ public class StaffEmploymentHistory {
     public StaffEmploymentHistory(
             StaffProfile staffProfile,
             Department department,
-            UUID branchId,
+            Branch branch,
             String jobTitle,
             EmploymentType employmentType,
             EmploymentStatus employmentStatus,
@@ -123,14 +135,18 @@ public class StaffEmploymentHistory {
         this.department = department;
 
         this.departmentCodeSnapshot = department != null
-                ? department.getDepartmentCode()
-                : null;
+                ? department.getDepartmentCode() : null;
 
         this.departmentNameSnapshot = department != null
-                ? department.getName()
-                : null;
+                ? department.getName() : null;
 
-        this.branchId = branchId;
+        this.branchId = branch != null ? branch.getId() : null;
+
+        this.branchCodeSnapshot = branch != null
+                ? branch.getBranchCode() : null;
+
+        this.branchNameSnapshot = branch != null ? branch.getName() : null;
+
         this.jobTitle = jobTitle;
         this.employmentType = employmentType;
         this.employmentStatus = employmentStatus;

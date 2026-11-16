@@ -3,21 +3,15 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffEmploymentRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffEmploymentHistoryResponse;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.Department;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffEmploymentHistory;
-import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
+import com.gideonheritagebank.IDENTITY_SERVICE.entity.*;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.BranchStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.UserType;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IdentityNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.DepartmentRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffEmploymentHistoryRepository;
-import com.gideonheritagebank.IDENTITY_SERVICE.repository.StaffProfileRepository;
-
+import com.gideonheritagebank.IDENTITY_SERVICE.repository.*;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -43,6 +37,7 @@ public class StaffEmploymentService {
     private final StaffEmploymentHistoryRepository employmentHistoryRepository;
     private final DepartmentRepository departmentRepository;
     private final BankUserRepository bankUserRepository;
+    private final BranchRepository branchRepository;
     private final IdentityMapper identityMapper;
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -97,8 +92,13 @@ public class StaffEmploymentService {
         LocalDate effectiveFrom = request.effectiveFrom();
         validateEffectiveDate(profile, effectiveFrom);
         validateEmploymentEndDate(request);
+
         Department department = resolveDepartment(request.departmentId());
         validateDepartmentAssignment(department);
+
+        Branch branch = resolveBranch(request.branchId());
+        validateBranchAssignment(branch);
+
         validateReportingManager(request.reportingManagerId(), staffUser.getId());
 
         StaffEmploymentHistory currentHistory = employmentHistoryRepository
@@ -121,7 +121,7 @@ public class StaffEmploymentService {
 
         /* Update the current staff profile. */
         profile.setDepartment(department);
-        profile.setBranchId(request.branchId());
+        profile.setBranch(branch);
         profile.setJobTitle(normalizeNullable(request.jobTitle()));
         profile.setEmploymentType(request.employmentType());
         profile.setEmploymentStatus(request.employmentStatus());
@@ -135,7 +135,7 @@ public class StaffEmploymentService {
         StaffEmploymentHistory newHistory = new StaffEmploymentHistory(
                 profile,
                 department,
-                request.branchId(),
+                branch,
                 normalizeNullable(request.jobTitle()),
                 request.employmentType(),
                 request.employmentStatus(),
@@ -376,5 +376,34 @@ public class StaffEmploymentService {
         }
 
         return PageRequest.of(pageNumber, pageSize, pageable.getSort());
+    }
+
+    /* RESOLVE BRANCH */
+
+    private Branch resolveBranch(UUID branchId) {
+
+        if (branchId == null) {
+            return null;
+        }
+
+        return branchRepository.findById(branchId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Branch not found: " + branchId
+                        )
+                );
+    }
+
+
+    /* VALIDATE BRANCH ASSIGNMENT */
+    private void validateBranchAssignment(Branch branch) {
+
+        if (branch == null) {
+            return;
+        }
+
+        if (branch.getStatus() != BranchStatus.ACTIVE) {
+            throw new BadRequest("Staff cannot be assigned to an inactive or closed branch");
+        }
     }
 }

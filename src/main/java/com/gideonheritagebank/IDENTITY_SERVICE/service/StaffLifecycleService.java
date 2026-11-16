@@ -288,7 +288,7 @@ public class StaffLifecycleService {
                 profile.getDepartment() == null
                         ? null : profile.getDepartment().getId(),
 
-                profile.getBranchId(),
+                profile.getBranch() == null ? null : profile.getBranch().getId(),
                 profile.getJobTitle(),
                 profile.getEmploymentType(),
                 EmploymentStatus.TERMINATED,

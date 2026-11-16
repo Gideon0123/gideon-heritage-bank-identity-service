@@ -16,6 +16,9 @@ public record StaffEmploymentHistoryResponse(
         String departmentName,
 
         UUID branchId,
+        String branchCode,
+        String branchName,
+
         String jobTitle,
 
         EmploymentType employmentType,

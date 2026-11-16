@@ -1,5 +1,7 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.dto.response;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.BranchStatus;
+import com.gideonheritagebank.IDENTITY_SERVICE.enums.BranchType;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentType;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
@@ -24,13 +26,34 @@ public record StaffProfileResponse(
         LocalDate hireDate,
         Instant lastLoginAt,
 
+        // DEPARTMENT
         UUID departmentId,
         String departmentCode,
         String departmentName,
 
+        // BRANCH
         UUID branchId,
-        String jobTitle,
+        String branchCode,
+        String branchName,
+        BranchType branchType,
 
+        String branchAddressLine1,
+        String branchAddressLine2,
+        String branchCity,
+        String branchStateOrRegion,
+        String branchPostalCode,
+        String branchCountryCode,
+
+        String branchPhoneNumber,
+        String branchEmail,
+
+        UUID branchManagerId,
+        String branchManagerName,
+
+        BranchStatus branchStatus,
+
+        // EMPLOYMENT
+        String jobTitle,
         EmploymentType employmentType,
         EmploymentStatus employmentStatus,
 

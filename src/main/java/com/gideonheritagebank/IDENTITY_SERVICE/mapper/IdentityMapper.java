@@ -72,6 +72,9 @@ public interface IdentityMapper {
     StaffResponse toStaffResponse(BankUser user);
 
     @Mapping(target = "id", source = "id")
+    BranchResponse toBranchResponse(Branch branch);
+
+    @Mapping(target = "id", source = "id")
     DepartmentResponse toDepartmentResponse(Department department);
 
     @Mapping(target = "id", source = "id")
@@ -84,13 +87,33 @@ public interface IdentityMapper {
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentCode", source = "department.departmentCode")
     @Mapping(target = "departmentName", source = "department.name")
-    @Mapping(target = "lastLoginAt", source = "lastLoginAt")
+    @Mapping(target = "lastLoginAt", source = "lastLoginAt") // Add a comment here
+    @Mapping(target = "branchId", source = "branch.id")
+    @Mapping(target = "branchCode", source = "branch.branchCode")
+    @Mapping(target = "branchName", source = "branch.name")
+    @Mapping(target = "branchType", source = "branch.branchType")
+    @Mapping(target = "branchAddressLine1", source = "branch.addressLine1")
+    @Mapping(target = "branchAddressLine2", source = "branch.addressLine2")
+    @Mapping(target = "branchCity", source = "branch.city")
+    @Mapping(target = "branchStateOrRegion", source = "branch.stateOrRegion")
+    @Mapping(target = "branchPostalCode", source = "branch.postalCode")
+    @Mapping(target = "branchCountryCode", source = "branch.countryCode")
+    @Mapping(target = "branchPhoneNumber", source = "branch.phoneNumber")
+    @Mapping(target = "branchEmail", source = "branch.email")
+    @Mapping(target = "branchStatus", source = "branch.status")
+    @Mapping(target = "branchManagerId", source = "branch.branchManager.id")
+    @Mapping(
+            target = "branchManagerName",
+            expression = "java(resolveBankUserName(staffProfile.getBranch() == null ? null : staffProfile.getBranch().getBranchManager()))"
+    )
     StaffProfileResponse toStaffProfileResponse(StaffProfile staffProfile);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentCode", source = "departmentCodeSnapshot")
     @Mapping(target = "departmentName", source = "departmentNameSnapshot")
+    @Mapping(target = "branchCode", source = "branchCodeSnapshot")
+    @Mapping(target = "branchName", source = "branchNameSnapshot")
     StaffEmploymentHistoryResponse toStaffEmploymentHistoryResponse(
             StaffEmploymentHistory history
     );
