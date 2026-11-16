@@ -13,6 +13,7 @@ import org.mapstruct.Mapping;
 public interface IdentityMapper {
 
     @Mapping(target = "roles", source = "roles")
+    @Mapping(target = "profilePhotoUrl", ignore = true)
     IdentityResponse toIdentityResponse(BankUser user);
 
     CustomerAddressResponse toCustomerAddressResponse(UserAddress address);

@@ -10,6 +10,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RefreshTokenRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.security.JwtService;
+import com.gideonheritagebank.IDENTITY_SERVICE.storage.ProfilePhotoUrlService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
+    private final ProfilePhotoUrlService profilePhotoUrlService;
     private final BankUserRepository bankUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -187,9 +189,14 @@ public class AuthenticationService {
                 jwtService.getAccessTokenTtl()
         );
 
-        IdentityResponse identityResponse = identityMapper.toIdentityResponse(
-                authenticatedUser
+        IdentityResponse identityResponse =
+                identityMapper.toIdentityResponse(authenticatedUser);
+
+        String profilePhotoUrl = profilePhotoUrlService.generatePresignedUrl(
+                authenticatedUser.getProfilePhotoUrl()
         );
+
+        identityResponse.setProfilePhotoUrl(profilePhotoUrl);
 
         return new AuthenticationResult(
                 identityResponse,
