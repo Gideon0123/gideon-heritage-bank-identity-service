@@ -72,22 +72,17 @@ public interface IdentityMapper {
     StaffResponse toStaffResponse(BankUser user);
 
     @Mapping(target = "id", source = "id")
+    @Mapping(target = "branchManagerId", source = "branchManager.id")
+    @Mapping(
+            target = "branchManagerName",
+            expression = "java(resolveBankUserName(branch.getBranchManager()))"
+    )
+    @Mapping(target = "branchManagerEmail", source = "branchManager.email")
     BranchResponse toBranchResponse(Branch branch);
 
     @Mapping(target = "id", source = "id")
     DepartmentResponse toDepartmentResponse(Department department);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "firstName", source = "user.firstName")
-    @Mapping(target = "lastName", source = "user.lastName")
-    @Mapping(target = "email", source = "user.email")
-    @Mapping(target = "phoneNumber", source = "user.phoneNumber")
-    @Mapping(target = "profilePhotoUrl", source = "user.profilePhotoUrl")
-    @Mapping(target = "departmentId", source = "department.id")
-    @Mapping(target = "departmentCode", source = "department.departmentCode")
-    @Mapping(target = "departmentName", source = "department.name")
-    @Mapping(target = "lastLoginAt", source = "lastLoginAt") // Add a comment here
     @Mapping(target = "branchId", source = "branch.id")
     @Mapping(target = "branchCode", source = "branch.branchCode")
     @Mapping(target = "branchName", source = "branch.name")
@@ -112,6 +107,7 @@ public interface IdentityMapper {
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentCode", source = "departmentCodeSnapshot")
     @Mapping(target = "departmentName", source = "departmentNameSnapshot")
+    @Mapping(target = "branchId", source = "branchId")
     @Mapping(target = "branchCode", source = "branchCodeSnapshot")
     @Mapping(target = "branchName", source = "branchNameSnapshot")
     StaffEmploymentHistoryResponse toStaffEmploymentHistoryResponse(
@@ -199,5 +195,22 @@ public interface IdentityMapper {
         }
 
         return StaffIdentityStatus.ACTIVE;
+    }
+
+    default String resolveBankUserName(BankUser user) {
+
+        if (user == null) {
+            return null;
+        }
+
+        String firstName = user.getFirstName() == null
+                ? "" : user.getFirstName().trim();
+
+        String lastName = user.getLastName() == null
+                ? "" : user.getLastName().trim();
+
+        String fullName = (firstName + " " + lastName).trim();
+
+        return fullName.isBlank() ? null : fullName;
     }
 }

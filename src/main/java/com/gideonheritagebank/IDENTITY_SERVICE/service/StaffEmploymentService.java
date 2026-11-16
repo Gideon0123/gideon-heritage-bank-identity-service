@@ -379,16 +379,14 @@ public class StaffEmploymentService {
     }
 
     /* RESOLVE BRANCH */
-
     private Branch resolveBranch(UUID branchId) {
 
         if (branchId == null) {
             return null;
         }
 
-        return branchRepository.findById(branchId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
+        return branchRepository.findByIdForUpdate(branchId)
+                .orElseThrow(() -> new ResourceNotFoundException(
                                 "Branch not found: " + branchId
                         )
                 );

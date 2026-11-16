@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 public record CreateBranchRequest(
 
@@ -58,11 +57,8 @@ public record CreateBranchRequest(
         @Size(max = 254, message = "Email cannot exceed 254 characters")
         String email,
 
-        UUID branchManagerId,
-
         @NotNull(message = "Branch opening date is required")
         LocalDate openedDate
 
 ) {
 }
-

@@ -18,15 +18,6 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
 
     Optional<Branch> findByBranchCodeIgnoreCase(String branchCode);
 
-    boolean existsByBranchCodeIgnoreCase(String branchCode);
-
-    boolean existsByBranchCodeIgnoreCaseAndIdNot(
-            String branchCode,
-            UUID id
-    );
-
-    boolean existsByBranchManager_Id(UUID branchManagerId);
-
     @EntityGraph(attributePaths = {
             "branchManager",
             "branchManager.staffProfile"
@@ -37,23 +28,76 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
             "branchManager",
             "branchManager.staffProfile"
     })
-    Page<Branch> findAllBy(Pageable pageable);
+    Optional<Branch> findWithManagerByBranchCodeIgnoreCase(
+            String branchCode
+    );
 
-    @EntityGraph(attributePaths = {
-            "branchManager",
-            "branchManager.staffProfile"
-    })
-    Page<Branch> findAllByStatus(
-            BranchStatus status,
-            Pageable pageable
+    boolean existsByBranchCodeIgnoreCase(String branchCode);
+
+    boolean existsByBranchCodeIgnoreCaseAndIdNot(
+            String branchCode,
+            UUID id
+    );
+
+    boolean existsByBranchManager_Id(UUID branchManagerId);
+
+    boolean existsByBranchManager_IdAndIdNot(
+            UUID branchManagerId,
+            UUID branchId
     );
 
     @EntityGraph(attributePaths = {
             "branchManager",
             "branchManager.staffProfile"
     })
-    Page<Branch> findAllByCityIgnoreCase(
-            String city,
+    @Query(
+            value = """
+                    SELECT b
+                    FROM Branch b
+                    WHERE
+                        (
+                            :keyword IS NULL
+                            OR LOWER(b.branchCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.city) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.stateOrRegion) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                        )
+                        AND (
+                            :status IS NULL
+                            OR b.status = :status
+                        )
+                        AND (
+                            :city IS NULL
+                            OR LOWER(b.city) = LOWER(:city)
+                        )
+                    """,
+            countQuery = """
+                    SELECT COUNT(b)
+                    FROM Branch b
+                    WHERE
+                        (
+                            :keyword IS NULL
+                            OR LOWER(b.branchCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.city) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.stateOrRegion) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(b.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                        )
+                        AND (
+                            :status IS NULL
+                            OR b.status = :status
+                        )
+                        AND (
+                            :city IS NULL
+                            OR LOWER(b.city) = LOWER(:city)
+                        )
+                    """
+    )
+    Page<Branch> searchBranches(
+            @Param("keyword") String keyword,
+            @Param("status") BranchStatus status,
+            @Param("city") String city,
             Pageable pageable
     );
 
@@ -68,5 +112,5 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
     );
 
     long countByStatus(BranchStatus status);
-
 }
+

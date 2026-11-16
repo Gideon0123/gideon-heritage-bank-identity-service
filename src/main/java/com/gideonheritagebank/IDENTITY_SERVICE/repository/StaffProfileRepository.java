@@ -74,4 +74,9 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
             "branch.branchManager"
     })
     Optional<StaffProfile> findWithUserAndDepartmentByUser_Id(UUID userId);
+
+    long countByBranch_IdAndEmploymentStatus(
+            UUID branchId,
+            EmploymentStatus employmentStatus
+    );
 }
