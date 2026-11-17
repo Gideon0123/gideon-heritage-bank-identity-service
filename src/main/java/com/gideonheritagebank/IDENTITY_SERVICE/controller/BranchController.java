@@ -148,6 +148,14 @@ public class BranchController {
     }
 
     // GET BRANCH BY CODE
+    @Operation(
+            summary = "Retrieve a branch by its code",
+            description = """
+                Retrieves the details of a specific bank branch using its unique code.
+
+                Only administrators can perform this operation.
+                """
+    )
     @GetMapping("/code/{branchCode}")
     public ResponseEntity<ApiResponse<BranchResponse>> getBranchByCode(
             @PathVariable String branchCode,
@@ -164,6 +172,24 @@ public class BranchController {
     }
 
     // UPDATE BRANCH
+    @Operation(
+            summary = "Update a branch",
+            description = """
+                Updates the information of a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch information updated successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @PatchMapping("/{branchId}")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> updateBranch(
@@ -185,6 +211,24 @@ public class BranchController {
     }
 
     // ASSIGN BRANCH MANAGER
+    @Operation(
+            summary = "Assign a manager to a branch",
+            description = """
+                Assigns a manager to a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch manager assigned successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @PatchMapping("/{branchId}/manager")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> assignBranchManager(
@@ -206,6 +250,24 @@ public class BranchController {
     }
 
     // REMOVE BRANCH MANAGER
+    @Operation(
+            summary = "Remove a manager from a branch",
+            description = """
+                Removes the manager from a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch manager removed successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @DeleteMapping("/{branchId}/manager")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> removeBranchManager(
@@ -223,6 +285,24 @@ public class BranchController {
     }
 
     // ACTIVATE BRANCH
+    @Operation(
+            summary = "Activate a branch",
+            description = """
+                Activates a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch activated successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @PatchMapping("/{branchId}/activate")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> activateBranch(
@@ -240,6 +320,24 @@ public class BranchController {
     }
 
     // DEACTIVATE BRANCH
+    @Operation(
+            summary = "Deactivate a branch",
+            description = """
+                Deactivates a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch deactivated successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @PatchMapping("/{branchId}/deactivate")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> deactivateBranch(
@@ -257,6 +355,24 @@ public class BranchController {
     }
 
     // PERMANENTLY CLOSE BRANCH
+    @Operation(
+            summary = "Permanently close a branch",
+            description = """
+                Permanently closes a specific bank branch.
+
+                Only administrators can perform this operation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Branch permanently closed successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data."
+            )
+    })
     @PatchMapping("/{branchId}/close")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> closeBranch(
