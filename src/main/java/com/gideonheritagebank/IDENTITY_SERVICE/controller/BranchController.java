@@ -11,6 +11,9 @@ import com.gideonheritagebank.IDENTITY_SERVICE.enums.BranchStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.BranchService;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Tag(
+        name = "Branch Endpoints",
+        description = "Manage branches in the system."
+)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/identity/admin/branches")
@@ -34,6 +41,37 @@ public class BranchController {
     private final BranchService branchService;
 
     // CREATE BRANCH
+    @Operation(
+            summary = "Create a bank branch",
+            description = """
+                Creates a new bank branch.
+
+                Only administrators can perform this operation.
+                A branch manager can be assigned separately after creation.
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "Branch created successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid branch details."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication is required."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "Administrator privileges are required."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "Branch code already exists."
+            )
+    })
     @PostMapping
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<BranchResponse>> createBranch(
@@ -51,6 +89,15 @@ public class BranchController {
     }
 
     // GET BRANCHES
+    @Operation(
+            summary = "Retrieve a list of bank branches",
+            description = """
+                Retrieves a paginated list of bank branches.
+
+                Optional filters can be applied for keyword, status, and city.
+                Only administrators can perform this operation.
+                """
+    )
     @GetMapping
     public ResponseEntity<ApiResponse<PagedResponse<BranchResponse>>> getBranches(
             @RequestParam(required = false) String keyword,
@@ -77,6 +124,14 @@ public class BranchController {
     }
 
     // GET BRANCH BY ID
+    @Operation(
+            summary = "Retrieve a branch by its ID",
+            description = """
+                Retrieves the details of a specific bank branch using its unique ID.
+
+                Only administrators can perform this operation.
+                """
+    )
     @GetMapping("/{branchId}")
     public ResponseEntity<ApiResponse<BranchResponse>> getBranchById(
             @PathVariable UUID branchId,

@@ -103,6 +103,14 @@ public class SecurityConfig {
                                 "/api/v1/identity/staff/onboarding/complete"
                         )
 
+                        .ignoringRequestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        )
+
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 )
@@ -147,6 +155,14 @@ public class SecurityConfig {
                                 "/api/v1/identity/resend-verification",
                                 "/api/v1/identity/reset-password",
                                 "/api/v1/identity/staff/onboarding/complete"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
                         ).permitAll()
 
                         .anyRequest().authenticated()
