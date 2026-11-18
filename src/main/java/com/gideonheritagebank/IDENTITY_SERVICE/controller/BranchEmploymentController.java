@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.BranchCurrentEmploymentResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.StaffEmploymentService;
@@ -24,6 +25,7 @@ import java.util.UUID;
         name = "Branch Employment Endpoints",
         description = "Manage branch employment in the system."
 )
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/identity/admin/branches")
