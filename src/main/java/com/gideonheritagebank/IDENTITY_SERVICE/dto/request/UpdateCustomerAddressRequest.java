@@ -1,30 +1,39 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.AddressType;
 import jakarta.validation.constraints.Size;
 
 public record UpdateCustomerAddressRequest(
 
         @Size(max = 255)
+        @Schema(description = "Address line1.")
         String addressLine1,
 
         @Size(max = 255)
+        @Schema(description = "Address line2.")
         String addressLine2,
 
         @Size(max = 100)
+        @Schema(description = "City.", example = "Lagos")
         String city,
 
         @Size(max = 100)
+        @Schema(description = "State or region.", example = "Lagos State")
         String stateOrRegion,
 
         @Size(max = 20)
+        @Schema(description = "Postal code.", example = "100001")
         String postalCode,
 
         @Size(min = 2, max = 2)
+        @Schema(description = "Country code.", example = "NG")
         String countryCode,
 
+        @Schema(description = "Address type.")
         AddressType addressType,
 
+        @Schema(description = "Primary.")
         Boolean primary
 
 ) {
