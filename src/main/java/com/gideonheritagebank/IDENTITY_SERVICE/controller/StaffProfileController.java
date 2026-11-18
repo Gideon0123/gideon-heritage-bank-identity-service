@@ -1,5 +1,11 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffProfileRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffProfileResponse;
@@ -17,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Tag(name = "Staff Profiles", description = "Retrieve and update staff profile information.")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/identity/admin/staff-profiles")
@@ -26,6 +34,50 @@ public class StaffProfileController {
     private final StaffProfileService staffProfileService;
 
     /* RETRIEVE STAFF PROFILE BY PROFILE ID */
+    @Operation(
+            summary = "Get staff profile by id",
+            description = "Retrieve and update staff profile information."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Operation completed successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "The request is invalid or failed validation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication is required or the supplied access token is invalid.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "The authenticated identity is not permitted to perform this operation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "The requested resource was not found.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "The request conflicts with the current or existing resource state.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "410",
+                    description = "The requested verification or workflow token has expired.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "An unexpected server error occurred."
+            )
+    })
     @GetMapping("/{staffProfileId}")
     public ResponseEntity<ApiResponse<StaffProfileResponse>> getStaffProfileById(
             @PathVariable UUID staffProfileId,
@@ -44,6 +96,50 @@ public class StaffProfileController {
     }
 
     /* RETRIEVE STAFF PROFILE BY USER ID */
+    @Operation(
+            summary = "Get staff profile by user id",
+            description = "Retrieve and update staff profile information."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Operation completed successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "The request is invalid or failed validation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication is required or the supplied access token is invalid.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "The authenticated identity is not permitted to perform this operation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "The requested resource was not found.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "The request conflicts with the current or existing resource state.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "410",
+                    description = "The requested verification or workflow token has expired.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "An unexpected server error occurred."
+            )
+    })
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<StaffProfileResponse>> getStaffProfileByUserId(
             @PathVariable UUID userId,
@@ -60,6 +156,50 @@ public class StaffProfileController {
     }
 
     /* UPDATE STAFF PROFILE */
+    @Operation(
+            summary = "Update staff profile",
+            description = "Retrieve and update staff profile information."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Operation completed successfully."
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "The request is invalid or failed validation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication is required or the supplied access token is invalid.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "The authenticated identity is not permitted to perform this operation.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "The requested resource was not found.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "The request conflicts with the current or existing resource state.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "410",
+                    description = "The requested verification or workflow token has expired.",
+                    content = @Content(schema = @Schema(implementation = com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "An unexpected server error occurred."
+            )
+    })
     @PatchMapping("/{staffProfileId}")
     @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<StaffProfileResponse>> updateStaffProfile(
