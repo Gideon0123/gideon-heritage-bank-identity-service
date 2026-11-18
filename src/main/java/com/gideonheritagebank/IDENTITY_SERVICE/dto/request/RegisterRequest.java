@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -16,15 +17,18 @@ public class RegisterRequest {
 
     @NotBlank(message = "First name is required")
     @Size(max = 100, message = "First name must not exceed 100 characters")
+    @Schema(description = "First name.", example = "Ada")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
     @Size(max = 100, message = "Last name must not exceed 100 characters")
+    @Schema(description = "Last name.", example = "Okafor")
     private String lastName;
 
     @NotBlank(message = "Email address is required")
     @Email(message = "Please provide a valid email address")
     @Size(max = 254, message = "Email address must not exceed 254 characters")
+    @Schema(description = "Email.", example = "customer@example.com")
     private String email;
 
     @NotBlank(message = "Phone number is required")
@@ -32,6 +36,7 @@ public class RegisterRequest {
             regexp = "^\\+[1-9]\\d{7,14}$",
             message = "Phone number must use international format, such as +2348012345678"
     )
+    @Schema(description = "Phone number.", example = "+2348012345678")
     private String phoneNumber;
 
     @NotBlank(message = "Password is required")
@@ -40,8 +45,10 @@ public class RegisterRequest {
             max = 128,
             message = "Password must contain between 12 and 128 characters"
     )
+    @Schema(description = "Password. Sensitive credential/token value; never expose in responses.", accessMode = Schema.AccessMode.WRITE_ONLY)
     private String password;
 
     @NotBlank(message = "Password confirmation is required")
+    @Schema(description = "Confirm password. Sensitive credential/token value; never expose in responses.", accessMode = Schema.AccessMode.WRITE_ONLY)
     private String confirmPassword;
 }
