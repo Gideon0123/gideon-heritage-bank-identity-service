@@ -9,15 +9,15 @@ import com.gideonheritagebank.IDENTITY_SERVICE.enums.StaffRole;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalStateException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.StaffOnboardingMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.outbox.OutboxEventService;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.gideonheritagebank.IDENTITY_SERVICE.event.StaffOnboardingRequestedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -48,7 +48,7 @@ public class StaffIdentityService {
     private final PasswordEncoder passwordEncoder;
     private final IdentityMapper identityMapper;
     private final StaffOnboardingTokenRepository staffOnboardingTokenRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventService outboxEventService;
 
     @Value("${identity.staff-onboarding.token-ttl:PT30M}")
     private Duration onboardingTokenTtl;
@@ -208,16 +208,13 @@ public class StaffIdentityService {
 
             staffOnboardingTokenRepository.saveAndFlush(onboardingToken);
 
-            /*
-             * Construct the invitation URL.
-             */
+            /* Construct the invitation URL. */
             String onboardingUrl = buildOnboardingUrl(rawToken);
 
-            /*
-             * The listener publishes to RabbitMQ only after commit.
-             */
-            eventPublisher.publishEvent(
-                    new StaffOnboardingRequestedEvent(
+            /* The listener publishes to RabbitMQ only after commit. */
+            outboxEventService.enqueueStaffOnboarding(
+                    new StaffOnboardingMessage(
+                            "STAFF_ONBOARDING_REQUESTED",
                             savedUser.getId(),
                             savedUser.getEmail(),
                             savedUser.getFirstName(),

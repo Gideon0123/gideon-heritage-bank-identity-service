@@ -2,17 +2,17 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.EmailVerificationToken;
-import com.gideonheritagebank.IDENTITY_SERVICE.event.EmailVerificationRequestedEvent;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.BadRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.IllegalArgumentException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.VerificationTokenExpired;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.EmailVerificationMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.outbox.OutboxEventService;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.EmailVerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +33,7 @@ public class EmailVerificationService {
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final BankUserRepository bankUserRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventService outboxEventService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${identity.verification.token-ttl:PT24H}")
@@ -179,14 +179,17 @@ public class EmailVerificationService {
 
         String verificationUrl = buildVerificationUrl(rawToken);
 
-        eventPublisher.publishEvent(new EmailVerificationRequestedEvent(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                rawToken,
-                verificationUrl,
-                expiresAt
-        ));
+        outboxEventService.enqueueEmailVerification(
+                new EmailVerificationMessage(
+                        "CUSTOMER_EMAIL_VERIFICATION_REQUESTED",
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        rawToken,
+                        verificationUrl,
+                        expiresAt
+                )
+        );
     }
 
     private String buildVerificationUrl(String rawToken) {

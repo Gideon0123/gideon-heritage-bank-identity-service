@@ -3,14 +3,14 @@ package com.gideonheritagebank.IDENTITY_SERVICE.service;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.BankUser;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.PasswordResetToken;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.RefreshToken;
-import com.gideonheritagebank.IDENTITY_SERVICE.event.PasswordResetRequestedEvent;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.PasswordResetMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.outbox.OutboxEventService;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.BankUserRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.PasswordResetTokenRepository;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +40,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventService outboxEventService;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -126,8 +126,9 @@ public class PasswordResetService {
          * successfully commits.
          */
 
-        eventPublisher.publishEvent(
-                new PasswordResetRequestedEvent(
+        outboxEventService.enqueuePasswordReset(
+                new PasswordResetMessage(
+                        "PASSWORD_RESET_REQUESTED",
                         user.getId(),
                         user.getEmail(),
                         user.getFirstName(),
