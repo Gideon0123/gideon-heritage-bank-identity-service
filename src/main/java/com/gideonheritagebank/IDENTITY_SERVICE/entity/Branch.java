@@ -113,13 +113,12 @@ public class Branch {
 
     @Column(
             name = "country_code",
-            nullable = false,
-            length = 2
+            length = 2,
+            nullable = false
     )
     private String countryCode = "NG";
 
     // CONTACT INFORMATION
-
     @Column(
             name = "phone_number",
             length = 16

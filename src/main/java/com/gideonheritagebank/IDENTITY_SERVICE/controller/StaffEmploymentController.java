@@ -1,5 +1,6 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.controller;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.TerminateStaffEmploymentRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffEmploymentRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
@@ -111,6 +112,31 @@ public class StaffEmploymentController {
         } catch (IllegalArgumentException exception) {
             throw new BusinessException("Authenticated staff identity is invalid.");
         }
+    }
+
+    /* TERMINATE STAFF EMPLOYMENT */
+    @PostMapping("/terminate")
+    @Idempotent(ttlMinutes = 3)
+    public ResponseEntity<ApiResponse<StaffEmploymentHistoryResponse>> terminateEmployment(
+            @PathVariable UUID staffProfileId,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody TerminateStaffEmploymentRequest requestBody,
+            HttpServletRequest request
+    ) {
+        UUID changedByUserId = getAuthenticatedUserId(jwt);
+
+        StaffEmploymentHistoryResponse response = staffEmploymentService.terminateEmployment(
+                staffProfileId,
+                requestBody,
+                changedByUserId
+        );
+
+        return success(
+                "Staff employment terminated successfully.",
+                response,
+                HttpStatus.OK,
+                request
+        );
     }
 
     private <T> ResponseEntity<ApiResponse<T>> success(

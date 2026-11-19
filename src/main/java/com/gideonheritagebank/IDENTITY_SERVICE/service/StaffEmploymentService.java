@@ -1,8 +1,11 @@
 package com.gideonheritagebank.IDENTITY_SERVICE.service;
 
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.TerminateStaffEmploymentRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.UpdateStaffEmploymentRequest;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.BranchCurrentEmploymentResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.PagedResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffEmploymentHistoryResponse;
+import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.StaffProfileResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.*;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.BranchStatus;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
 import org.springframework.cache.annotation.Cacheable;
@@ -78,15 +82,11 @@ public class StaffEmploymentService {
         }
 
         if (staffUser.isIdentityClosed()) {
-            throw new BadRequest(
-                    "Employment cannot be updated for a closed identity"
-            );
+            throw new BadRequest("Employment cannot be updated for a closed identity");
         }
 
         if (profile.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
-            throw new BadRequest(
-                    "A terminated staff member's employment cannot be modified"
-            );
+            throw new BadRequest("A terminated staff member's employment cannot be modified");
         }
 
         LocalDate effectiveFrom = request.effectiveFrom();
@@ -214,6 +214,176 @@ public class StaffEmploymentService {
                 );
 
         return identityMapper.toStaffEmploymentHistoryResponse(history);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheNames.STAFF_EMPLOYMENT, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_PROFILE, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_DIRECTORY, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.STAFF_STATUS, allEntries = true),
+            @CacheEvict(cacheNames = CacheNames.BRANCHES, allEntries = true)
+    })
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public StaffEmploymentHistoryResponse terminateEmployment(
+            UUID staffProfileId,
+            TerminateStaffEmploymentRequest request,
+            UUID changedByUserId
+    ) {
+        if (request == null) {
+            throw new BadRequest("Employment termination request is required");
+        }
+
+        if (request.employmentEndDate() == null) {
+            throw new BadRequest("Employment end date is required");
+        }
+
+        if (request.reason() == null || request.reason().isBlank()) {
+            throw new BadRequest("Termination reason is required");
+        }
+
+        StaffProfile profile = staffProfileRepository.findByIdForUpdate(staffProfileId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Staff profile not found: " + staffProfileId
+                ));
+
+        BankUser staffUser = profile.getUser();
+
+        if (staffUser == null || staffUser.getUserType() != UserType.STAFF) {
+            throw new BadRequest("Employment can only be terminated for a staff identity");
+        }
+
+        if (staffUser.isIdentityClosed()) {
+            throw new BadRequest("Employment cannot be terminated for a closed identity");
+        }
+
+        if (profile.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
+            throw new BadRequest("This staff member's employment has already been terminated");
+        }
+
+        LocalDate terminationDate = request.employmentEndDate();
+
+        if (terminationDate.isAfter(LocalDate.now())) {
+            throw new BadRequest("Future employment termination dates are not supported");
+        }
+
+        if (profile.getAssignmentStartDate() != null
+                && terminationDate.isBefore(profile.getAssignmentStartDate())) {
+            throw new BadRequest(
+                    "Employment end date cannot be before the current assignment start date"
+            );
+        }
+
+        StaffEmploymentHistory currentHistory = employmentHistoryRepository
+                .findFirstByStaffProfile_IdAndEffectiveToIsNull(staffProfileId)
+                .orElseThrow(() -> new BadRequest(
+                        "Current employment history record is missing"
+                ));
+
+        /*
+         * Close the current employment-history record.
+         *
+         * We retain its branch and department snapshots so that
+         * historical employment remains traceable after termination.
+         */
+        currentHistory.setEmploymentStatus(EmploymentStatus.TERMINATED);
+        currentHistory.setEffectiveTo(terminationDate);
+        currentHistory.setChangeReason(request.reason().trim());
+        currentHistory.setChangedByUserId(changedByUserId);
+
+        StaffEmploymentHistory savedHistory =
+                employmentHistoryRepository.saveAndFlush(currentHistory);
+
+        /*
+         * Remove the current assignment from the staff profile.
+         * Historical branch and department information remains
+         * available in StaffEmploymentHistory.
+         */
+        branchRepository.findByBranchManagerIdForUpdate(staffUser.getId())
+                .ifPresent(branch -> {
+                    branch.removeBranchManager();
+                    branchRepository.save(branch);
+                });
+
+        profile.setEmploymentStatus(EmploymentStatus.TERMINATED);
+        profile.setEmploymentEndDate(terminationDate);
+        profile.setBranch(null);
+        profile.setDepartment(null);
+        profile.setReportingManagerId(null);
+
+        staffProfileRepository.saveAndFlush(profile);
+
+        return identityMapper.toStaffEmploymentHistoryResponse(savedHistory);
+    }
+
+    /* GET CURRENT EMPLOYMENT BY BRANCH */
+    @Cacheable(
+            cacheNames = CacheNames.STAFF_EMPLOYMENT,
+            key = "T(com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheKeys).page('branch-current-employment:' + #p0, #p1.pageNumber, #p1.pageSize, #p1.sort.toString())"
+    )
+    public BranchCurrentEmploymentResponse getCurrentEmploymentByBranch(
+            UUID branchId,
+            Pageable pageable
+    ) {
+        if (branchId == null) {
+            throw new BadRequest("Branch ID is required");
+        }
+
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Branch not found: " + branchId
+                ));
+
+        List<EmploymentStatus> currentStatuses = List.of(
+                EmploymentStatus.PENDING,
+                EmploymentStatus.ACTIVE,
+                EmploymentStatus.ON_LEAVE,
+                EmploymentStatus.SUSPENDED
+        );
+
+        Pageable validatedPageable = validateAndBuildPageable(pageable);
+
+        Page<StaffProfileResponse> employeePage = staffProfileRepository
+                .findByBranch_IdAndEmploymentStatusIn(
+                        branchId,
+                        currentStatuses,
+                        validatedPageable
+                )
+                .map(identityMapper::toStaffProfileResponse);
+
+        long activeCount = staffProfileRepository.countByBranch_IdAndEmploymentStatus(
+                branchId,
+                EmploymentStatus.ACTIVE
+        );
+
+        long pendingCount = staffProfileRepository.countByBranch_IdAndEmploymentStatus(
+                branchId,
+                EmploymentStatus.PENDING
+        );
+
+        long onLeaveCount = staffProfileRepository.countByBranch_IdAndEmploymentStatus(
+                branchId,
+                EmploymentStatus.ON_LEAVE
+        );
+
+        long suspendedCount = staffProfileRepository.countByBranch_IdAndEmploymentStatus(
+                branchId,
+                EmploymentStatus.SUSPENDED
+        );
+
+        long totalEmployees = activeCount + pendingCount + onLeaveCount + suspendedCount;
+
+        return new BranchCurrentEmploymentResponse(
+                branch.getId(),
+                branch.getBranchCode(),
+                branch.getName(),
+                totalEmployees,
+                activeCount,
+                pendingCount,
+                onLeaveCount,
+                suspendedCount,
+                PagedResponse.from(employeePage)
+        );
     }
 
     /* VALIDATE REQUEST */

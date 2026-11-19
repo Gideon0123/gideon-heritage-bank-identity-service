@@ -83,7 +83,16 @@ public interface IdentityMapper {
     @Mapping(target = "id", source = "id")
     DepartmentResponse toDepartmentResponse(Department department);
 
-    @Mapping(target = "branchId", source = "branch.id")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "phoneNumber", source = "user.phoneNumber")
+    @Mapping(target = "profilePhotoUrl", source = "user.profilePhotoUrl")
+    @Mapping(target = "departmentId", source = "department.id")
+    @Mapping(target = "departmentCode", source = "department.departmentCode")
+    @Mapping(target = "departmentName", source = "department.name")
+    @Mapping(target = "branchId", source = "branch.id") //
     @Mapping(target = "branchCode", source = "branch.branchCode")
     @Mapping(target = "branchName", source = "branch.name")
     @Mapping(target = "branchType", source = "branch.branchType")

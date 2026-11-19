@@ -366,9 +366,7 @@ public class BranchService {
         Branch branch = findBranchForUpdate(branchId);
 
         if (branch.getStatus() == BranchStatus.CLOSED) {
-            throw new BadRequest(
-                    "A permanently closed branch cannot be deactivated."
-            );
+            throw new BadRequest("A permanently closed branch cannot be deactivated.");
         }
 
         if (branch.getStatus() == BranchStatus.INACTIVE) {
@@ -376,7 +374,6 @@ public class BranchService {
         }
 
         validateBranchHasNoActiveStaff(branchId);
-
         branch.deactivate();
 
         Branch savedBranch = saveBranch(branch);
@@ -396,9 +393,7 @@ public class BranchService {
             UUID branchId,
             CloseBranchRequest request
     ) {
-
-        if (request == null || request.reason() == null
-                || request.reason().isBlank()) {
+        if (request == null || request.reason() == null || request.reason().isBlank()) {
 
             throw new BadRequest("A branch closure reason is required.");
         }
@@ -406,17 +401,13 @@ public class BranchService {
         String reason = request.reason().trim();
 
         if (reason.length() > 1000) {
-            throw new BadRequest(
-                    "Branch closure reason cannot exceed 1000 characters."
-            );
+            throw new BadRequest("Branch closure reason cannot exceed 1000 characters.");
         }
 
         Branch branch = findBranchForUpdate(branchId);
 
         if (branch.getStatus() == BranchStatus.CLOSED) {
-            throw new ConflictException(
-                    "This branch has already been permanently closed."
-            );
+            throw new ConflictException("This branch has already been permanently closed.");
         }
 
         validateBranchHasNoActiveStaff(branchId);
@@ -483,11 +474,10 @@ public class BranchService {
 
         for (EmploymentStatus status : ACTIVE_ASSIGNMENT_STATUSES) {
 
-            assignedStaffCount +=
-                    staffProfileRepository.countByBranch_IdAndEmploymentStatus(
-                            branchId,
-                            status
-                    );
+            assignedStaffCount += staffProfileRepository.countByBranch_IdAndEmploymentStatus(
+                    branchId,
+                    status
+            );
         }
 
         if (assignedStaffCount > 0) {

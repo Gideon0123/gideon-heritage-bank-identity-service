@@ -52,47 +52,57 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
     })
     @Query(
             value = """
-                    SELECT b
-                    FROM Branch b
-                    WHERE
-                        (
-                            :keyword IS NULL
-                            OR LOWER(b.branchCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.city) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.stateOrRegion) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                        )
-                        AND (
-                            :status IS NULL
-                            OR b.status = :status
-                        )
-                        AND (
-                            :city IS NULL
-                            OR LOWER(b.city) = LOWER(:city)
-                        )
-                    """,
+                SELECT b
+                FROM Branch b
+                WHERE
+                    (
+                        COALESCE(:keyword, '') = ''
+                        OR LOWER(b.branchCode) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.name) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.city) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.stateOrRegion) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.email) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                    )
+                    AND (
+                        :status IS NULL
+                        OR b.status = :status
+                    )
+                    AND (
+                        COALESCE(:city, '') = ''
+                        OR LOWER(b.city) = LOWER(COALESCE(:city, ''))
+                    )
+                """,
             countQuery = """
-                    SELECT COUNT(b)
-                    FROM Branch b
-                    WHERE
-                        (
-                            :keyword IS NULL
-                            OR LOWER(b.branchCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.city) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.stateOrRegion) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(b.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                        )
-                        AND (
-                            :status IS NULL
-                            OR b.status = :status
-                        )
-                        AND (
-                            :city IS NULL
-                            OR LOWER(b.city) = LOWER(:city)
-                        )
-                    """
+                SELECT COUNT(b)
+                FROM Branch b
+                WHERE
+                    (
+                        COALESCE(:keyword, '') = ''
+                        OR LOWER(b.branchCode) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.name) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.city) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.stateOrRegion) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                        OR LOWER(b.email) LIKE
+                            CONCAT('%', LOWER(COALESCE(:keyword, '')), '%')
+                    )
+                    AND (
+                        :status IS NULL
+                        OR b.status = :status
+                    )
+                    AND (
+                        COALESCE(:city, '') = ''
+                        OR LOWER(b.city) = LOWER(COALESCE(:city, ''))
+                    )
+                """
     )
     Page<Branch> searchBranches(
             @Param("keyword") String keyword,
@@ -112,5 +122,15 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
     );
 
     long countByStatus(BranchStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT b
+        FROM Branch b
+        WHERE b.branchManager.id = :userId
+        """)
+    Optional<Branch> findByBranchManagerIdForUpdate(
+            @Param("userId") UUID userId
+    );
 }
 

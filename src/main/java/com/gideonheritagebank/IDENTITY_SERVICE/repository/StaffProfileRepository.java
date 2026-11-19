@@ -3,10 +3,13 @@ package com.gideonheritagebank.IDENTITY_SERVICE.repository;
 import com.gideonheritagebank.IDENTITY_SERVICE.entity.StaffProfile;
 import com.gideonheritagebank.IDENTITY_SERVICE.enums.EmploymentStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,5 +81,22 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
     long countByBranch_IdAndEmploymentStatus(
             UUID branchId,
             EmploymentStatus employmentStatus
+    );
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "department",
+            "branch",
+            "branch.branchManager"
+    })
+    Page<StaffProfile> findByBranch_IdAndEmploymentStatusIn(
+            UUID branchId,
+            Collection<EmploymentStatus> employmentStatuses,
+            Pageable pageable
+    );
+
+    long countByBranch_IdAndEmploymentStatusIn(
+            UUID branchId,
+            Collection<EmploymentStatus> employmentStatuses
     );
 }
