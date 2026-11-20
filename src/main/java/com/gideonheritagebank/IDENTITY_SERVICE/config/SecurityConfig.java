@@ -100,7 +100,8 @@ public class SecurityConfig {
                                 "/api/v1/identity/auth/reset-password",
                                 "/auth/refresh-token",
                                 "/api/v1/identity/auth/refresh-token",
-                                "/api/v1/identity/staff/onboarding/complete"
+                                "/api/v1/identity/staff/onboarding/complete",
+                                "/api/v1/identity/email-change/verify"
                         )
 
                         .ignoringRequestMatchers(
@@ -154,7 +155,8 @@ public class SecurityConfig {
                                 "/api/v1/identity/forgot-password",
                                 "/api/v1/identity/resend-verification",
                                 "/api/v1/identity/reset-password",
-                                "/api/v1/identity/staff/onboarding/complete"
+                                "/api/v1/identity/staff/onboarding/complete",
+                                "/api/v1/identity/email-change/verify"
                         ).permitAll()
 
                         .requestMatchers(

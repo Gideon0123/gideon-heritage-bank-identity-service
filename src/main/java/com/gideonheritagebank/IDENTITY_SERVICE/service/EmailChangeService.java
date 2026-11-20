@@ -38,8 +38,8 @@ import java.util.UUID;
 @Slf4j
 public class EmailChangeService {
 
-    private static final Duration EMAIL_CHANGE_REQUEST_INTERVAL = Duration.ofDays(90);
-    private static final Duration EMAIL_CHANGE_LOCK_DURATION = Duration.ofDays(183);
+    private static final long EMAIL_CHANGE_REQUEST_INTERVAL_MONTHS = 3;
+    private static final long EMAIL_CHANGE_LOCK_DURATION_MONTHS = 6;
     private static final List<String> AVAILABLE_NOTIFICATION_CHANNELS =
             List.of(
                     "EMAIL",
@@ -242,7 +242,9 @@ public class EmailChangeService {
          * ownership verification.
          */
         user.setEmailChangedAt(now);
-        Instant nextAllowedChangeAt = now.plus(EMAIL_CHANGE_LOCK_DURATION);
+        Instant nextAllowedChangeAt = now.atZone(java.time.ZoneOffset.UTC)
+                .plusMonths(EMAIL_CHANGE_LOCK_DURATION_MONTHS)
+                .toInstant();
         user.setEmailChangeLockedUntil(nextAllowedChangeAt);
         token.markUsed(now);
 
@@ -312,7 +314,9 @@ public class EmailChangeService {
             return;
         }
 
-        Instant nextRequestAllowedAt = lastRequest.plus(EMAIL_CHANGE_REQUEST_INTERVAL);
+        Instant nextRequestAllowedAt = lastRequest.atZone(java.time.ZoneOffset.UTC)
+                .plusMonths(EMAIL_CHANGE_REQUEST_INTERVAL_MONTHS)
+                .toInstant();
 
         if (now.isBefore(nextRequestAllowedAt)) {
             throw new ConflictException(
