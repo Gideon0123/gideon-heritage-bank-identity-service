@@ -75,6 +75,28 @@ public class BankUser {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
+    /*
+     * Timestamp of the most recent email-change request.
+     * This enforces the three-month minimum interval between
+     * email-change requests, including abandoned requests.
+     */
+    @Column(name = "last_email_change_requested_at")
+    private Instant lastEmailChangeRequestedAt;
+
+    /*
+     * Timestamp at which the most recent email change was successfully
+     * verified and completed.
+     */
+    @Column(name = "email_changed_at")
+    private Instant emailChangedAt;
+
+    /*
+     * The user cannot initiate another email change until this time.
+     * This is set to six months after successful verification.
+     */
+    @Column(name = "email_change_locked_until")
+    private Instant emailChangeLockedUntil;
+
     @Column(name = "account_non_locked", nullable = false)
     private boolean accountNonLocked = true;
 
