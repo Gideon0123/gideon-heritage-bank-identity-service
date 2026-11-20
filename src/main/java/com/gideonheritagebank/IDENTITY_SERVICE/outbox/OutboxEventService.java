@@ -2,6 +2,9 @@ package com.gideonheritagebank.IDENTITY_SERVICE.outbox;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.CustomerConvertedToStaffMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.EmailChangeVerificationMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.EmailChangedConfirmedMessage;
 import com.gideonheritagebank.IDENTITY_SERVICE.messaging.EmailVerificationMessage;
 import com.gideonheritagebank.IDENTITY_SERVICE.messaging.PasswordResetMessage;
 import com.gideonheritagebank.IDENTITY_SERVICE.messaging.StaffOnboardingMessage;
@@ -36,6 +39,15 @@ public class OutboxEventService {
     @Value("${identity.messaging.staff-onboarding-routing-key:notification.staff-onboarding}")
     private String staffOnboardingRoutingKey;
 
+    @Value("${identity.messaging.customer-converted-routing-key:notification.customer-converted-to-staff}")
+    private String customerConvertedRoutingKey;
+
+    @Value("${identity.messaging.email-change-verification-routing-key:notification.email-change-verification}")
+    private String emailChangeVerificationRoutingKey;
+
+    @Value("${identity.messaging.email-changed-routing-key:notification.email-changed}")
+    private String emailChangedRoutingKey;
+
     @Value("${identity.outbox.retry.max-attempts:12}")
     private int maxAttempts;
 
@@ -45,7 +57,7 @@ public class OutboxEventService {
     @Value("${identity.outbox.retry.max-delay:PT30M}")
     private Duration maximumRetryDelay;
 
-    /* CUSTOMER EMAIL VERIFICATION */
+    /* EXISTING EVENTS */
     @Transactional(propagation = Propagation.MANDATORY)
     public void enqueueEmailVerification(
             EmailVerificationMessage message
@@ -60,7 +72,6 @@ public class OutboxEventService {
         );
     }
 
-    /* PASSWORD RESET */
     @Transactional(propagation = Propagation.MANDATORY)
     public void enqueuePasswordReset(
             PasswordResetMessage message
@@ -75,7 +86,6 @@ public class OutboxEventService {
         );
     }
 
-    /* STAFF ONBOARDING */
     @Transactional(propagation = Propagation.MANDATORY)
     public void enqueueStaffOnboarding(
             StaffOnboardingMessage message
@@ -87,6 +97,57 @@ public class OutboxEventService {
         enqueue(
                 "STAFF_ONBOARDING_REQUESTED",
                 staffOnboardingRoutingKey,
+                messageId,
+                message
+        );
+    }
+
+    /* NEW EVENT 1: CUSTOMER CONVERTED TO STAFF */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void enqueueCustomerConvertedToStaff(
+            CustomerConvertedToStaffMessage message
+    ) {
+        String messageId = message.userId()
+                + ":CUSTOMER_CONVERTED_TO_STAFF:"
+                + message.convertedAt();
+
+        enqueue(
+                "CUSTOMER_CONVERTED_TO_STAFF",
+                customerConvertedRoutingKey,
+                messageId,
+                message
+        );
+    }
+
+    /* NEW EVENT 2: EMAIL CHANGE VERIFICATION */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void enqueueEmailChangeVerification(
+            EmailChangeVerificationMessage message
+    ) {
+        String messageId = message.userId()
+                + ":EMAIL_CHANGE_VERIFICATION:"
+                + message.expiresAt();
+
+        enqueue(
+                "EMAIL_CHANGE_VERIFICATION_REQUESTED",
+                emailChangeVerificationRoutingKey,
+                messageId,
+                message
+        );
+    }
+
+    /* NEW EVENT 3: EMAIL CHANGE CONFIRMED */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void enqueueEmailChangedConfirmed(
+            EmailChangedConfirmedMessage message
+    ) {
+        String messageId = message.userId()
+                + ":EMAIL_CHANGED:"
+                + message.emailChangedAt();
+
+        enqueue(
+                "EMAIL_CHANGE_CONFIRMED",
+                emailChangedRoutingKey,
                 messageId,
                 message
         );
@@ -118,8 +179,8 @@ public class OutboxEventService {
         } catch (JsonProcessingException exception) {
 
             /*
-             * Never log the payload.
-             * It contains a raw one-time credential token.
+             * Do not log the payload. Some events contain
+             * one-time credentials and verification URLs.
              */
             throw new IllegalStateException(
                     "Could not serialize outbox event",
@@ -128,7 +189,7 @@ public class OutboxEventService {
         }
     }
 
-    /* MARK SUCCESSFUL PUBLICATION */
+    /* OUTBOX PUBLICATION SUCCESS */
     @Transactional
     public void markPublished(
             UUID eventId,
@@ -142,7 +203,12 @@ public class OutboxEventService {
         );
     }
 
-    /* RECORD A FAILED PUBLICATION ATTEMPT */
+    /*
+     * ============================================================
+     * OUTBOX PUBLICATION FAILURE
+     * ============================================================
+     */
+
     @Transactional
     public void recordFailure(
             OutboxDispatchRecord record,
@@ -180,22 +246,9 @@ public class OutboxEventService {
         );
     }
 
-    /*
-     * EXPONENTIAL BACKOFF
-     *
-     * 5 seconds
-     * 10 seconds
-     * 20 seconds
-     * 40 seconds
-     * ...
-     *
-     * Capped at the configured maximum.
-     */
     private Duration calculateRetryDelay(int attempt) {
 
-        long multiplier = 1L << Math.clamp(attempt - 1, 0,
-                20
-        );
+        long multiplier = 1L << Math.clamp(attempt - 1, 0, 20);
 
         Duration calculated;
 
@@ -203,7 +256,6 @@ public class OutboxEventService {
             calculated = initialRetryDelay.multipliedBy(multiplier);
 
         } catch (ArithmeticException exception) {
-
             calculated = maximumRetryDelay;
         }
 

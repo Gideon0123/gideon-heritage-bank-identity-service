@@ -9,6 +9,8 @@ import com.gideonheritagebank.IDENTITY_SERVICE.exception.BusinessException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ConflictException;
 import com.gideonheritagebank.IDENTITY_SERVICE.exception.ResourceNotFoundException;
 import com.gideonheritagebank.IDENTITY_SERVICE.mapper.IdentityMapper;
+import com.gideonheritagebank.IDENTITY_SERVICE.messaging.CustomerConvertedToStaffMessage;
+import com.gideonheritagebank.IDENTITY_SERVICE.outbox.OutboxEventService;
 import com.gideonheritagebank.IDENTITY_SERVICE.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.List;
 import com.gideonheritagebank.IDENTITY_SERVICE.cache.CacheNames;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -40,6 +43,7 @@ public class CustomerStaffConversionService {
             StaffRole.SUPPORT_AGENT
     );
 
+    private final OutboxEventService outboxEventService;
     private final BankUserRepository bankUserRepository;
     private final RoleRepository roleRepository;
     private final StaffProfileRepository staffProfileRepository;
@@ -219,6 +223,34 @@ public class CustomerStaffConversionService {
 
         // 16. Persist the converted identity.
         bankUserRepository.saveAndFlush(user);
+
+        /*
+         * The conversion and notification event are committed together.
+         * If this transaction rolls back, the outbox event also rolls back.
+         * The notification relay will publish it only after the outbox row
+         * has been committed and claimed.
+         */
+        Instant convertedAt = savedConversion.getConvertedAt();
+
+        outboxEventService.enqueueCustomerConvertedToStaff(
+                new CustomerConvertedToStaffMessage(
+                        "CUSTOMER_CONVERTED_TO_STAFF",
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        savedConversion.getEmployeeNumber(),
+                        savedConversion.getAssignedStaffRole().name(),
+                        convertedAt,
+                        "USER_PREFERENCE",
+                        List.of(
+                                "EMAIL",
+                                "PUSH",
+                                "IN_APP",
+                                "WEBSOCKET"
+                        )
+                )
+        );
 
         log.info(
                 "Customer identity {} converted to staff. Employee number: {}. Converted by: {}",

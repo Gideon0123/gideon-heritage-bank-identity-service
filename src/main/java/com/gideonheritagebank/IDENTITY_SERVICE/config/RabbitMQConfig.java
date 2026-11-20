@@ -104,6 +104,69 @@ public class RabbitMQConfig {
                 .with(routingKey);
     }
 
+    @Bean
+    public Queue customerConvertedToStaffQueue(
+            @Value("${identity.messaging.customer-converted-queue:identity.customer-converted-to-staff}")
+            String queueName
+    ) {
+        return QueueBuilder.durable(queueName).build();
+    }
+
+    @Bean
+    public Binding customerConvertedToStaffBinding(
+            Queue customerConvertedToStaffQueue,
+            DirectExchange identityNotificationExchange,
+            @Value("${identity.messaging.customer-converted-routing-key:notification.customer-converted-to-staff}")
+            String routingKey
+    ) {
+        return BindingBuilder
+                .bind(customerConvertedToStaffQueue)
+                .to(identityNotificationExchange)
+                .with(routingKey);
+    }
+
+    @Bean
+    public Queue emailChangeVerificationQueue(
+            @Value("${identity.messaging.email-change-verification-queue:identity.email-change-verification}")
+            String queueName
+    ) {
+        return QueueBuilder.durable(queueName).build();
+    }
+
+    @Bean
+    public Binding emailChangeVerificationBinding(
+            Queue emailChangeVerificationQueue,
+            DirectExchange identityNotificationExchange,
+            @Value("${identity.messaging.email-change-verification-routing-key:notification.email-change-verification}")
+            String routingKey
+    ) {
+        return BindingBuilder
+                .bind(emailChangeVerificationQueue)
+                .to(identityNotificationExchange)
+                .with(routingKey);
+    }
+
+    @Bean
+    public Queue emailChangedQueue(
+            @Value("${identity.messaging.email-changed-queue:identity.email-changed}")
+            String queueName
+    ) {
+        return QueueBuilder.durable(queueName).build();
+    }
+
+    @Bean
+    public Binding emailChangedBinding(
+            Queue emailChangedQueue,
+            DirectExchange identityNotificationExchange,
+            @Value("${identity.messaging.email-changed-routing-key:notification.email-changed}")
+            String routingKey
+    ) {
+        return BindingBuilder
+                .bind(emailChangedQueue)
+                .to(identityNotificationExchange)
+                .with(routingKey);
+    }
+
     /**
      * Explicitly provides RabbitAdmin.
      * RabbitAdmin uses the application's RabbitMQ ConnectionFactory
