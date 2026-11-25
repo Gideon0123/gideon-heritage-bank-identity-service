@@ -32,12 +32,10 @@ public class SecurityConfig {
             @Value("${identity.security.cookies.access-name:ACCESS_TOKEN}")
             String accessCookieName) {
 
-        DefaultBearerTokenResolver headerTokenResolver =
-                new DefaultBearerTokenResolver();
+        DefaultBearerTokenResolver headerTokenResolver = new DefaultBearerTokenResolver();
 
         return request -> {
-            String authorizationHeader =
-                    request.getHeader(HttpHeaders.AUTHORIZATION);
+            String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
             // Preserve standard Authorization: Bearer authentication.
             // When supplied, it takes priority over cookie authentication.
