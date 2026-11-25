@@ -15,11 +15,9 @@ import java.util.stream.Collectors;
 public class CurrentUserService {
 
     public CurrentUser getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null
-                || !authentication.isAuthenticated()
+        if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             throw new AccessDeniedException("An authenticated JWT principal is required.");
         }

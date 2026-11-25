@@ -72,7 +72,7 @@ public class IdentityController {
             )
     })
     @PostMapping("/register")
-    @Idempotent(ttlMinutes = 3)
+//    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<IdentityResponse>> registerCustomer(
             @Valid @RequestBody RegisterRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -135,7 +135,7 @@ public class IdentityController {
             )
     })
     @PostMapping("/verify-email")
-    @Idempotent(ttlMinutes = 3)
+//    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -195,7 +195,7 @@ public class IdentityController {
             )
     })
     @PostMapping("/resend-verification")
-    @Idempotent(ttlMinutes = 3)
+//    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest requestBody,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,

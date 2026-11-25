@@ -4,6 +4,7 @@ import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.EmailChangeRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.request.VerifyEmailChangeRequest;
 import com.gideonheritagebank.IDENTITY_SERVICE.dto.response.ApiResponse;
 import com.gideonheritagebank.IDENTITY_SERVICE.service.EmailChangeService;
+import com.gideonheritagebank.IDENTITY_SERVICE.utils.Idempotent;
 import com.gideonheritagebank.IDENTITY_SERVICE.utils.TraceIdUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +42,7 @@ public class EmailChangeController {
                     """
     )
     @PostMapping("/me/email-change")
+    @Idempotent(ttlMinutes = 3)
     public ResponseEntity<ApiResponse<Void>> requestEmailChange(
             @Valid @RequestBody EmailChangeRequest requestBody,
             @AuthenticationPrincipal Jwt jwt,

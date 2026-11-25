@@ -83,8 +83,7 @@ public class OutboxRelayService {
                     TimeUnit.MILLISECONDS
             );
 
-            if (!confirm.isAck()) {
-
+            if (!confirm.ack()) {
                 throw new AmqpException("RabbitMQ negatively acknowledged the publication");
             }
 
